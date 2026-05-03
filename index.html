@@ -1364,6 +1364,13 @@ https://detail.1688.com/offer/982578255205.html"></textarea>
         <div class="admin-tab-content" data-tab="deploy">
 
         <div class="admin-section">
+          <h3>📡 Estado del catálogo</h3>
+          <div id="deployStatusCard" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
+            <!-- renderizado por renderDeployStatus() -->
+          </div>
+        </div>
+
+        <div class="admin-section">
           <h3>🚀 Publicar en Vercel (modo blindado)</h3>
           <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
             Genera un <code>index.html</code> <b>completamente sanitizado</b>:
@@ -1443,9 +1450,33 @@ https://detail.1688.com/offer/982578255205.html"></textarea>
         </div>
 
         <div class="admin-section">
+          <h3>💾 Backup y restauración</h3>
+          <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            Tu admin guarda todo en el navegador. Si borrás caché, cambiás de compu o algo se rompe, podés restaurar desde un backup JSON.
+          </p>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+            <b>Backup recomendado:</b> cada vez que importes productos nuevos → "Exportar JSON" → guardar en Drive/Dropbox.
+          </p>
+          <button class="secondary" onclick="exportData()">📥 Exportar backup (JSON)</button>
+          <details style="margin-top:14px;">
+            <summary>📤 Restaurar desde backup JSON</summary>
+            <div style="padding-top:10px;">
+              <label>Pegá el contenido del archivo aura-backup-XXXX.json</label>
+              <textarea id="restoreJson" style="min-height: 100px; font-family: monospace; font-size: 0.7rem;" placeholder='{ "version": "v5", "products": [...], "formula": {...}, "store": {...}, "bank": {...}, "orders": [...] }'></textarea>
+              <button onclick="restoreBackupJson()">↩️ Restaurar backup</button>
+              <p style="font-size:0.7rem; color: var(--text-muted); margin-top: 6px;">
+                ⚠️ Esto reemplaza tu state actual. Hacé export primero por si querés volver atrás.
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div class="admin-section">
           <h3>⚠️ Datos</h3>
-          <button class="secondary" onclick="exportData()">Exportar todo (JSON)</button>
-          <button class="danger" onclick="resetAll()">Borrar todo</button>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+            Reset total. Borra todo: productos, fórmula, banco, pedidos, configs Vercel/GitHub. <b>Solo si querés empezar de cero.</b>
+          </p>
+          <button class="danger" onclick="resetAll()">🗑 Borrar todo</button>
         </div>
 
         </div><!-- /tab deploy -->
@@ -1547,6 +1578,7 @@ let state = {
   orders: load("orders", []),
   vercel: load("vercel", { token: "", projectId: "", projectName: "" }),
   github: load("github", { token: "", owner: "", repo: "", path: "index.html", branch: "main" }),
+  meta: load("meta", { lastChangeAt: null, lastDeployAt: null, lastDeployUrl: "", lastDeployStatus: "", lastGithubCommit: "" }),
   isAdmin: false,
   activeBrand: null,
   activeModel: null,
@@ -2658,6 +2690,7 @@ function showAdminPanel() {
   if (document.getElementById("gh-branch")) document.getElementById("gh-branch").value = gh.branch || "main";
   renderTierRows();
   renderOrders();
+  renderDeployStatus();
   document.getElementById("st-name").value = state.store.name;
   document.getElementById("st-tag").value = state.store.tagline;
   document.getElementById("st-pass").value = state.store.pass;
@@ -2772,6 +2805,7 @@ function importProducts() {
       });
     });
     save("products");
+    bumpChange();
     renderTabs();
     renderProducts();
     renderAdminProducts();
@@ -2836,6 +2870,7 @@ function deleteProduct(id) {
   for (const k in state.cart) if (k.startsWith(id + "::")) delete state.cart[k];
   save("products");
   save("cart");
+  bumpChange();
   renderTabs();
   renderProducts();
   renderAdminProducts();
@@ -2852,6 +2887,7 @@ function saveFormula() {
     handlingPerUnit: parseFloat(document.getElementById("cf-handling").value) || 0
   };
   save("formula");
+  bumpChange();
   renderProducts();
   renderAdminProducts();
   updateSummary();
@@ -2879,6 +2915,7 @@ function saveTiers() {
   }));
   state.formula.logisticTiers = tiers;
   save("formula");
+  bumpChange();
   renderProducts();
   renderAdminProducts();
   updateSummary();
@@ -2892,7 +2929,7 @@ function saveStore() {
     pass: document.getElementById("st-pass").value.trim() || "579318642"
   };
   save("store");
-  // (storeName y storeTagline removidos del header — solo logo)
+  bumpChange();
   document.title = state.store.name + " · Catálogo Mayorista";
   toast("Tienda guardada");
 }
@@ -2907,6 +2944,7 @@ function saveBank() {
     wa: document.getElementById("bn-wa").value.trim()
   };
   save("bank");
+  bumpChange();
   toast("Datos guardados");
 }
 // Genera el HTML blindado (reusable: para download O para deploy directo)
@@ -3049,25 +3087,119 @@ async function publishToVercel() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data).slice(0, 200));
-    const url = data.url ? "https://" + data.url : "deployed";
-    toast(`✓ Publicado a Vercel: ${url}`);
+    const url = data.url ? "https://" + data.url : "";
+    toast(`✓ Publicado a Vercel: ${url || 'OK'}`);
     console.log("Vercel deploy:", data);
+    // Registrar deploy exitoso
+    state.meta.lastDeployAt = new Date().toISOString();
+    state.meta.lastDeployUrl = url;
+    state.meta.lastDeployStatus = "ok";
   } catch (e) {
     toast("Error Vercel: " + e.message.slice(0, 100));
+    state.meta.lastDeployStatus = "error: " + e.message.slice(0, 60);
     console.error(e);
   }
+  save("meta");
   // Sincronizar también con GitHub si está configurado
   const ghCfg = state.github || {};
   if (ghCfg.token && ghCfg.owner && ghCfg.repo) {
     toast("Sincronizando GitHub…");
     try {
       const result = await pushToGithub(html);
-      toast(`✓ GitHub sincronizado · commit ${result.commit?.sha?.slice(0, 7) || ""}`);
+      const commit = result.commit?.sha?.slice(0, 7) || "";
+      toast(`✓ GitHub sincronizado · commit ${commit}`);
+      state.meta.lastGithubCommit = commit;
+      save("meta");
     } catch (e) {
       toast(`⚠ GitHub falló: ${e.message.slice(0, 80)}`);
       console.error(e);
     }
   }
+  renderDeployStatus();
+  updateHeaderStatusDot();
+}
+
+// Marcar que hubo un cambio relevante (productos, formula, store, bank)
+function bumpChange() {
+  state.meta.lastChangeAt = new Date().toISOString();
+  save("meta");
+  renderDeployStatus();
+  updateHeaderStatusDot();
+}
+
+// Formato "hace X tiempo"
+function fmtAgo(iso) {
+  if (!iso) return "nunca";
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.round(diff / 1000);
+  if (sec < 60) return "hace " + sec + " s";
+  const min = Math.round(sec / 60);
+  if (min < 60) return "hace " + min + " min";
+  const h = Math.round(min / 60);
+  if (h < 24) return "hace " + h + " h";
+  const d = Math.round(h / 24);
+  return "hace " + d + " " + (d === 1 ? "día" : "días");
+}
+
+// Determina si el state local tiene cambios sin publicar
+function hasPendingChanges() {
+  const m = state.meta || {};
+  if (!m.lastDeployAt) return state.products.length > 0; // nunca se deployó pero hay data
+  if (!m.lastChangeAt) return false;
+  return new Date(m.lastChangeAt) > new Date(m.lastDeployAt);
+}
+
+// Renderiza el panel de estado en Deploy tab
+function renderDeployStatus() {
+  const el = document.getElementById("deployStatusCard");
+  if (!el) return;
+  const m = state.meta || {};
+  const dirty = hasPendingChanges();
+  const dotColor = dirty ? "#f59e0b" : (m.lastDeployAt ? "#10b981" : "#94a3b8");
+  const statusText = dirty
+    ? "⚠ Cambios sin publicar"
+    : (m.lastDeployAt ? "✓ Sincronizado" : "Sin publicaciones aún");
+  let html = `
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom: 10px;">
+      <div style="width:10px; height:10px; border-radius:50%; background:${dotColor};"></div>
+      <b style="font-size: 0.95rem;">${statusText}</b>
+    </div>
+    <div style="display:grid; grid-template-columns: max-content 1fr; gap:6px 12px; font-size:0.82rem;">
+      <span style="color: var(--text-muted);">Productos en admin:</span><b>${state.products.length}</b>
+      <span style="color: var(--text-muted);">Último cambio local:</span><b>${fmtAgo(m.lastChangeAt)}</b>
+      <span style="color: var(--text-muted);">Última publicación:</span><b>${fmtAgo(m.lastDeployAt)}</b>`;
+  if (m.lastDeployUrl) html += `
+      <span style="color: var(--text-muted);">URL deploy:</span><a href="${escapeAttr(m.lastDeployUrl)}" target="_blank" style="color: var(--accent); text-decoration: none;">${escapeHtml(m.lastDeployUrl.replace(/^https?:\/\//, ""))}</a>`;
+  if (m.lastGithubCommit) html += `
+      <span style="color: var(--text-muted);">Último commit:</span><code style="font-size:0.78rem; background:#0f172a; padding:2px 6px; border-radius:3px;">${escapeHtml(m.lastGithubCommit)}</code>`;
+  if (m.lastDeployStatus && m.lastDeployStatus !== "ok") html += `
+      <span style="color: var(--text-muted);">Estado:</span><span style="color: var(--danger);">${escapeHtml(m.lastDeployStatus)}</span>`;
+  html += `</div>`;
+  if (dirty && m.lastDeployAt) {
+    html += `<div style="margin-top: 10px; padding: 8px 12px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; font-size: 0.78rem; color: var(--accent);">
+      💡 Hiciste cambios después del último deploy. Click "🚀 Publicar a Vercel ahora" abajo para actualizar el sitio público.
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// Dot pequeño en el botón Admin del header (verde/amarillo/gris)
+function updateHeaderStatusDot() {
+  const btn = document.querySelector(".header-admin-btn");
+  if (!btn) return;
+  const m = state.meta || {};
+  const dirty = hasPendingChanges();
+  const color = dirty ? "#f59e0b" : (m.lastDeployAt ? "#10b981" : "#94a3b8");
+  // Inyectar/actualizar el dot
+  let dot = btn.querySelector(".admin-status-dot");
+  if (!dot) {
+    dot = document.createElement("span");
+    dot.className = "admin-status-dot";
+    dot.style.cssText = "display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle;";
+    btn.insertBefore(dot, btn.firstChild);
+  }
+  dot.style.background = color;
+  dot.title = dirty ? "Cambios sin publicar" : (m.lastDeployAt ? "Sincronizado" : "Sin publicaciones");
 }
 
 function saveVercelConfig() {
@@ -3177,13 +3309,60 @@ function exportProductsExcel() {
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({
-    products: state.products, formula: state.formula, store: state.store, bank: state.bank
-  }, null, 2)], {type:"application/json"});
+  const backup = {
+    version: "v5",
+    exportedAt: new Date().toISOString(),
+    products: state.products,
+    formula: state.formula,
+    store: state.store,
+    bank: state.bank,
+    orders: state.orders
+    // vercel/github NO se incluyen por seguridad (tokens)
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "catalogo-backup.json";
+  a.download = `aura-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
   a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 1000);
+  toast("✓ Backup descargado");
+}
+
+function restoreBackupJson() {
+  const txt = document.getElementById("restoreJson").value.trim();
+  if (!txt) return toast("Pegá el JSON primero");
+  let data;
+  try { data = JSON.parse(txt); }
+  catch (e) { return toast("JSON inválido: " + e.message.slice(0, 80)); }
+  if (!data || typeof data !== "object") return toast("Formato inválido");
+  // Resumen de lo que se va a restaurar
+  const summary = [];
+  if (Array.isArray(data.products)) summary.push(`${data.products.length} productos`);
+  if (data.formula) summary.push("fórmula");
+  if (data.store) summary.push("config tienda");
+  if (data.bank) summary.push("datos banco");
+  if (Array.isArray(data.orders)) summary.push(`${data.orders.length} pedidos`);
+  if (!summary.length) return toast("El JSON no tiene datos válidos para restaurar");
+  if (!confirm(`¿Restaurar ${summary.join(", ")}?\n\nEsto REEMPLAZA tu state actual. Tokens Vercel/GitHub se mantienen.`)) return;
+  // Restaurar
+  if (Array.isArray(data.products)) { state.products = data.products; save("products"); }
+  if (data.formula && typeof data.formula === "object") {
+    state.formula = { ...state.formula, ...data.formula };
+    save("formula");
+  }
+  if (data.store && typeof data.store === "object") {
+    state.store = { ...state.store, ...data.store };
+    save("store");
+  }
+  if (data.bank && typeof data.bank === "object") {
+    state.bank = { ...state.bank, ...data.bank };
+    save("bank");
+  }
+  if (Array.isArray(data.orders)) { state.orders = data.orders; save("orders"); }
+  document.getElementById("restoreJson").value = "";
+  toast("✓ Backup restaurado. Recargando…");
+  setTimeout(() => location.reload(), 1500);
 }
 function resetAll() {
   if (!confirm("¿Borrar TODOS los datos? Esto no se puede deshacer.")) return;
@@ -3211,6 +3390,7 @@ document.addEventListener("keydown", e => {
 renderTabs();
 renderProducts();
 updateSummary();
+updateHeaderStatusDot();
 document.querySelectorAll(".modal-bg").forEach(m => {
   m.addEventListener("click", e => { if (e.target === m) m.classList.remove("active"); });
 });
