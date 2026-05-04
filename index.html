@@ -1,0 +1,3399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura · Catálogo Mayorista</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%23fbbf24' stroke-width='1.5'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%23fbbf24' stroke-width='1.5'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-hover: #334155;
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --success: #10b981;
+    --danger: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  header h1.brand-logo {
+    margin: 0 !important;
+    padding: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0;
+    background: none !important;
+    color: transparent;
+  }
+  header h1.brand-logo svg {
+    height: 28px;
+    width: auto;
+    display: block;
+  }
+  header p {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin: 0;
+    line-height: 1.1;
+  }
+  .banner-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .banner-pill::before { content: "✨"; font-size: 0.75rem; }
+  .header-admin-btn {
+    margin-left: auto;
+    background: rgba(245, 158, 11, 0.14);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: var(--accent);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .header-admin-btn:hover {
+    background: rgba(245, 158, 11, 0.22);
+    border-color: var(--accent);
+  }
+  @media (max-width: 600px) {
+    header { padding: 10px 14px; }
+    header h1.brand-logo svg { height: 22px; }
+    .header-admin-btn { font-size: 0.65rem; padding: 3px 10px; }
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 16px;
+    padding-bottom: 170px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  /* Tabs por marca + modelo (jerárquicos) */
+  .filter-bar-wrap {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    overflow: hidden;
+  }
+  .brand-tabs, .model-tabs {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6px 14px;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .brand-tabs { padding-bottom: 2px; }
+  .brand-tabs::-webkit-scrollbar, .model-tabs::-webkit-scrollbar { display: none; }
+  .model-tabs { padding-top: 2px; padding-bottom: 8px; border-top: 1px solid rgba(255,255,255,0.04); }
+  .brand-tab {
+    padding: 6px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    transition: all 0.15s;
+    font-weight: 600;
+    border-radius: 0;
+  }
+  .brand-tab:hover { color: var(--text); }
+  .brand-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .brand-tab .count {
+    margin-left: 6px;
+    background: rgba(245, 158, 11, 0.18);
+    color: var(--accent);
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .brand-tab:not(.active) .count {
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--text-muted);
+  }
+  .model-tab {
+    padding: 5px 12px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .model-tab:hover { border-color: var(--accent); color: var(--text); }
+  .model-tab.active {
+    background: var(--accent);
+    color: #0f172a;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .model-tab .count {
+    margin-left: 6px;
+    background: rgba(0,0,0,0.18);
+    color: inherit;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+  }
+
+  /* Grilla flat de variantes (cada color = card independiente) */
+  .grid-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .variant-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+  }
+  .variant-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .variant-card.has-qty { border-color: var(--accent); }
+  .variant-card-img {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #0f172a;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  .variant-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .variant-qty-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent);
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .variant-card-body {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+  .variant-card-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 2.3em;
+  }
+  .variant-card-color-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .variant-card-color-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid rgba(255,255,255,0.7);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+  .variant-card-color {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .variant-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .vc-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .vc-tag-icon {
+    font-size: 0.65rem;
+    line-height: 1;
+  }
+  .vc-tag-model {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .variant-card-price {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 4px;
+  }
+  .variant-card-price small {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .variant-card-ship {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .variant-card-ship::before { content: "✈"; color: #fbbf24; }
+  .variant-card-moq {
+    font-size: 0.68rem;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.3;
+  }
+  .variant-card-moq.met {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: var(--success);
+  }
+  .variant-card-moq .progress {
+    flex: 1;
+    height: 4px;
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .variant-card-moq .progress > span {
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.2s;
+  }
+  .variant-card-moq.met .progress > span { background: var(--success); }
+  .variant-card-qty {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #0f172a;
+    border-radius: 6px;
+    padding: 2px;
+    margin-top: 6px;
+  }
+  .variant-card-qty .qty-btn { width: 28px; height: 28px; }
+  .variant-card-qty .qty-input { font-size: 0.9rem; }
+  .no-products-for-model {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  /* Contador de resultados (fila completa del grid) */
+  .variant-count {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-align: left;
+    padding: 4px 2px 10px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    margin-bottom: 4px;
+  }
+  .product {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+  }
+  .product:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .product-img-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #0f172a;
+    overflow: hidden;
+    position: relative;
+  }
+  .product-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .product-color-dots {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    display: flex;
+    gap: 4px;
+    background: rgba(15,23,42,0.7);
+    padding: 4px 8px;
+    border-radius: 999px;
+    backdrop-filter: blur(4px);
+  }
+  .product-color-dots .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 1.5px solid white;
+  }
+  .product-color-dots .more {
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 2px;
+  }
+  .product-body {
+    padding: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .product-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    min-height: 2.4em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .product-models {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .product-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: auto;
+  }
+  .product-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .product-price-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .product-ship-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .product-ship-tag::before { content: "✈"; color: #fbbf24; }
+  .product-cta {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: var(--accent);
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .product-qty-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent);
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .summary-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 8px 14px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+    z-index: 40;
+    transform: translateY(100%);
+    transition: transform 0.3s;
+  }
+  .summary-bar.active { transform: translateY(0); }
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .summary-info { display: flex; flex-direction: column; line-height: 1.1; }
+  .summary-info .count { font-size: 0.7rem; color: var(--text-muted); }
+  .summary-info .total { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+  .summary-moq {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .summary-moq .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(148, 163, 184, 0.2);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .summary-moq .progress-bar > span {
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.25s, background 0.25s;
+    width: 0%;
+  }
+  .summary-moq.met .progress-bar > span { background: var(--success); }
+  .summary-moq.met { color: var(--success); }
+  .summary-moq .label-text { white-space: nowrap; }
+  .summary-tier {
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    border-radius: 6px;
+  }
+  .summary-tier.upgraded {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: var(--success);
+  }
+  .summary-tier .tier-icon { flex-shrink: 0; }
+  .summary-tier .tier-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .summary-tier b { color: var(--accent); }
+  .summary-tier.upgraded b { color: var(--success); }
+  .checkout-btn {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .checkout-btn:hover { background: var(--accent-hover); }
+
+  /* Modal */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 0;
+    overflow-y: auto;
+  }
+  .modal-bg.active { display: flex; }
+  .modal {
+    background: var(--card);
+    border-radius: 12px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 100vh;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    margin: 20px;
+  }
+  .modal.wide { max-width: 720px; }
+
+  /* Admin modal: ocupa toda la pantalla, fondo opaco — no se ve el catálogo detrás */
+  #adminModal {
+    background: var(--bg);
+    align-items: flex-start;
+  }
+  #adminModal .modal {
+    max-width: 1200px;
+    width: calc(100% - 24px);
+    max-height: calc(100vh - 24px);
+    height: calc(100vh - 24px);
+    margin: 12px;
+    border: 1px solid var(--border);
+  }
+  #adminModal .modal-body {
+    padding: 24px 28px;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    z-index: 5;
+  }
+  .modal-header h2 { font-size: 1.15rem; }
+  .close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.6rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+  }
+  .modal-body { padding: 20px; }
+
+  /* Product Detail */
+  .pd-hero {
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 360px;
+    background: #0f172a;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .pd-hero img { width: 100%; height: 100%; object-fit: contain; }
+  .pd-section { margin-bottom: 18px; }
+  .pd-section h3 {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pd-models {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .pd-model-pill {
+    padding: 8px 14px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.15s;
+    color: var(--text);
+  }
+  .pd-model-pill:hover { border-color: var(--accent); }
+  .pd-model-pill.active {
+    background: var(--accent);
+    color: #0f172a;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .pd-color-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .pd-color-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.15s;
+  }
+  .pd-color-row.has-qty { border-color: var(--accent); }
+  .pd-color-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    border: 2px solid transparent;
+  }
+  .pd-color-thumb.active { border-color: var(--accent); }
+  .pd-color-info { flex: 1; min-width: 0; }
+  .pd-color-info .nm {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pd-color-info .pr { font-size: 0.8rem; color: var(--accent); font-weight: 600; }
+  .qty-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--card);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .qty-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: var(--card-hover);
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .qty-btn:hover { background: var(--accent); color: #0f172a; }
+  .qty-input {
+    width: 56px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    outline: none;
+  }
+  .qty-input::-webkit-inner-spin-button,
+  .qty-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .qty-input { -moz-appearance: textfield; }
+
+  .pd-summary {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 12px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .pd-summary .lbl { color: var(--text-muted); font-size: 0.85rem; }
+  .pd-summary .tot { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+
+  /* Customer billing form */
+  .customer-type-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .ctype-btn {
+    padding: 8px 12px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .ctype-btn:hover { color: var(--text); border-color: var(--accent); }
+  .ctype-btn.active {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .cust-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: border-color 0.15s;
+  }
+  .cust-input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .cust-input.error {
+    border-color: var(--danger);
+    background: rgba(239,68,68,0.05);
+  }
+
+  /* Checkout */
+  .order-list { margin-bottom: 16px; }
+  .order-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .order-item img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; }
+  .order-item .info { flex: 1; min-width: 0; }
+  .order-item .info .nm { font-weight: 600; }
+  .order-item .info .meta { color: var(--text-muted); font-size: 0.78rem; }
+  .order-item .qty { color: var(--text-muted); font-size: 0.85rem; }
+  .order-item .price { font-weight: 600; color: var(--accent); min-width: 80px; text-align: right; }
+  .order-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-top: 2px solid var(--accent);
+    margin-top: 8px;
+  }
+  .bank-info {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+    font-size: 0.9rem;
+  }
+  .bank-info h3 { color: var(--accent); margin-bottom: 8px; font-size: 1rem; }
+  .bank-info p { padding: 3px 0; display: flex; justify-content: space-between; gap: 12px; }
+  .bank-info p span:first-child { color: var(--text-muted); flex-shrink: 0; }
+  .bank-info p span:last-child { font-weight: 600; user-select: all; text-align: right; word-break: break-all; }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .actions button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.15s;
+  }
+  .btn-wa { background: #25D366; color: white; }
+  .btn-copy { background: var(--card-hover); color: var(--text); }
+  .actions button:hover { opacity: 0.85; }
+
+  /* Admin */
+  .admin-fab {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    background: var(--card-hover);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+    z-index: 30;
+  }
+  .admin-fab:hover { opacity: 1; }
+  /* Tabs admin */
+  .admin-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0;
+  }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tab {
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .admin-tab:hover { color: var(--text); }
+  .admin-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .admin-tab-content { display: none; }
+  .admin-tab-content.active { display: block; }
+  .admin-section { margin-bottom: 22px; }
+  .admin-section h3 { font-size: 1rem; margin-bottom: 10px; color: var(--accent); }
+  .admin-section label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .admin-section input, .admin-section textarea {
+    width: 100%;
+    padding: 8px 10px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+  .admin-section textarea { min-height: 80px; resize: vertical; font-family: monospace; font-size: 0.78rem; }
+  .admin-section button {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 8px;
+  }
+  .admin-section button.danger { background: var(--danger); color: white; }
+  .admin-section button.secondary { background: var(--card-hover); color: var(--text); }
+  .admin-product-list {
+    background: #0f172a;
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .admin-product-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .admin-product-row:last-child { border-bottom: none; }
+  .admin-product-row img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+  .admin-product-row .info { flex: 1; min-width: 0; }
+  .admin-product-row .info .nm {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .admin-product-row .info .pr { color: var(--accent); font-size: 0.8rem; }
+  .admin-product-row .del-btn {
+    background: var(--danger);
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty h2 { margin-bottom: 8px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+    .pd-hero { max-height: 280px; }
+  }
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--success);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .toast.show { opacity: 1; }
+  details summary {
+    cursor: pointer;
+    padding: 8px 0;
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="storeName" class="brand-logo" aria-label="Aura">
+    <svg viewBox="0 0 130 36" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+      <circle cx="16" cy="18" r="12" fill="none" stroke="#fbbf24" stroke-width="1.2"/>
+      <circle cx="16" cy="18" r="6.5" fill="none" stroke="#fbbf24" stroke-width="1.2"/>
+      <text x="38" y="24" font-family="-apple-system, system-ui, 'Segoe UI', sans-serif" font-size="18" font-weight="500" letter-spacing="3.5" fill="#fbbf24">AURA</text>
+    </svg>
+  </h1>
+  <button class="header-admin-btn" onclick="openAdmin()">⚙ Admin</button>
+</header>
+
+<div class="filter-bar-wrap">
+  <div class="brand-tabs" id="brandTabs"></div>
+  <div class="model-tabs" id="modelTabs"></div>
+</div>
+
+<div class="container">
+  <div id="grid" class="grid-list"></div>
+  <div id="empty" class="empty" style="display:none;">
+    <h2>Catálogo en preparación</h2>
+    <p>Vuelve pronto, estamos cargando productos.</p>
+  </div>
+</div>
+
+<button class="admin-fab" id="adminFab" title="Admin">⚙</button>
+
+<div class="summary-bar" id="summaryBar">
+  <div class="summary-row">
+    <div class="summary-info">
+      <span class="count" id="summaryCount">0 unidades</span>
+      <span class="total" id="summaryTotal">$0 <small id="summaryTotalLabel" style="font-size:0.65rem; color: var(--text-muted); font-weight: 400;">con IVA</small></span>
+    </div>
+    <button class="checkout-btn" onclick="openCheckout()">Confirmar pedido</button>
+  </div>
+  <div class="summary-moq" id="summaryMOQ">
+    <span class="label-text" id="summaryMOQLabel">⚠ Mínimo: 0/50 u</span>
+    <div class="progress-bar"><span id="summaryMOQProgress"></span></div>
+  </div>
+  <div class="summary-tier" id="summaryTier">
+    <span class="tier-icon">📦</span>
+    <span class="tier-text" id="summaryTierLabel">Tarifa Express activa · Pedí más para descuentos por volumen</span>
+  </div>
+</div>
+
+<!-- Product Detail Modal -->
+<div class="modal-bg" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="pdName">Producto</h2>
+      <button class="close-btn" onclick="closeProduct()">×</button>
+    </div>
+    <div class="modal-body" id="pdBody"></div>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal-bg" id="checkoutModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Resumen del pedido mayorista</h2>
+      <button class="close-btn" onclick="closeCheckout()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="order-list" id="orderList"></div>
+      <div id="orderBreakdown" style="display:flex; flex-direction:column; gap:6px; padding:8px 0; border-top: 1px solid var(--border); font-size: 0.92rem;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color: var(--text-muted);">📦 Total unidades</span>
+          <b id="orderTotalUnits">0 carcasas</b>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color: var(--text-muted);">Subtotal neto</span>
+          <span id="orderSubtotal">$0</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color: var(--text-muted);">IVA <span id="orderIvaPct">19</span>%</span>
+          <span id="orderIvaAmount">$0</span>
+        </div>
+      </div>
+      <div class="order-total">
+        <span>Total a transferir</span>
+        <span id="orderTotal">$0</span>
+      </div>
+      <div class="bank-info" id="bankInfo">
+        <h3>Datos para transferencia</h3>
+        <p><span>Razón social:</span><span id="bk-name">—</span></p>
+        <p><span>RUT:</span><span id="bk-rut">—</span></p>
+        <p><span>Banco:</span><span id="bk-bank">—</span></p>
+        <p><span>Tipo cuenta:</span><span id="bk-type">—</span></p>
+        <p><span>N° cuenta:</span><span id="bk-acct">—</span></p>
+        <p><span>Email:</span><span id="bk-email">—</span></p>
+      </div>
+      <div style="margin-top:14px; padding-top:14px; border-top: 1px solid var(--border);">
+        <h3 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--accent);">📄 Datos para facturación</h3>
+        <div class="customer-type-row" id="customerTypeRow">
+          <button type="button" data-type="persona" class="ctype-btn active" onclick="selectCustomerType('persona')">👤 Persona</button>
+          <button type="button" data-type="empresa" class="ctype-btn" onclick="selectCustomerType('empresa')">🏢 Empresa</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px;">
+          <div>
+            <label class="cust-label" id="cust-name-label" style="font-size:0.78rem; color: var(--text-muted); display:block; margin-bottom:3px;">Nombre completo *</label>
+            <input id="cust-name" class="cust-input" placeholder="Ej: Juan Pérez">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color: var(--text-muted); display:block; margin-bottom:3px;">RUT *</label>
+            <input id="cust-rut" class="cust-input" placeholder="Ej: 12.345.678-9">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color: var(--text-muted); display:block; margin-bottom:3px;">Dirección *</label>
+            <input id="cust-address" class="cust-input" placeholder="Calle, número, comuna, ciudad">
+          </div>
+          <div id="cust-giro-row" style="display:none;">
+            <label style="font-size:0.78rem; color: var(--text-muted); display:block; margin-bottom:3px;">Giro (opcional)</label>
+            <input id="cust-giro" class="cust-input" placeholder="Ej: Comercio al por menor de carcasas">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color: var(--text-muted); display:block; margin-bottom:3px;">Email *</label>
+            <input id="cust-email" type="email" class="cust-input" placeholder="contacto@tienda.cl">
+          </div>
+          <div>
+            <label style="font-size:0.78rem; color: var(--text-muted); display:block; margin-bottom:3px;">Teléfono *</label>
+            <input id="cust-phone" class="cust-input" placeholder="+56 9 1234 5678">
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn-copy" onclick="copyOrder()">Copiar pedido</button>
+        <button class="btn-wa" onclick="confirmAndSendWhatsApp()">Confirmar y enviar por WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Detail Modal (z-index alto para mostrarse sobre admin) -->
+<div class="modal-bg" id="orderModal" style="z-index: 110;">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2 id="orderModalTitle">Pedido</h2>
+      <button class="close-btn" onclick="closeOrderModal()">×</button>
+    </div>
+    <div class="modal-body" id="orderModalBody"></div>
+  </div>
+</div>
+
+<!-- Buy List Modal (consolidada para 1688) -->
+<div class="modal-bg" id="buyListModal" style="z-index: 110;">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>🛒 Lista de compra consolidada</h2>
+      <button class="close-btn" onclick="closeBuyList()">×</button>
+    </div>
+    <div class="modal-body" id="buyListBody"></div>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div class="modal-bg" id="adminModal">
+  <div class="modal wide">
+    <div class="modal-header">
+      <h2>Panel de administración</h2>
+      <button class="close-btn" onclick="closeAdmin()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="adminLogin" class="admin-section">
+        <label>Clave de admin</label>
+        <input type="password" id="adminPass" placeholder="Ingresa la clave">
+        <button onclick="loginAdmin()">Entrar</button>
+      </div>
+      <div id="adminPanel" style="display:none;">
+
+        <div class="admin-tabs">
+          <button class="admin-tab active" onclick="switchAdminTab('orders')">📋 Pedidos</button>
+          <button class="admin-tab" onclick="switchAdminTab('products')">📦 Productos</button>
+          <button class="admin-tab" onclick="switchAdminTab('formula')">💰 Fórmula</button>
+          <button class="admin-tab" onclick="switchAdminTab('store')">🏪 Tienda</button>
+          <button class="admin-tab" onclick="switchAdminTab('bank')">🏦 Banco</button>
+          <button class="admin-tab" onclick="switchAdminTab('deploy')">🚀 Deploy</button>
+        </div>
+
+        <!-- TAB: PEDIDOS -->
+        <div class="admin-tab-content active" data-tab="orders">
+
+        <div class="admin-section">
+          <h3>📋 Pedidos recibidos <span id="ordersBadge" style="font-size:0.7rem; background: rgba(245,158,11,0.2); color: var(--accent); padding: 2px 8px; border-radius: 999px; margin-left: 6px;"></span></h3>
+          <div id="ordersStatsRow" style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;"></div>
+          <div id="adminOrdersList" class="admin-product-list" style="max-height: 400px;"></div>
+          <details style="margin-top:8px;">
+            <summary>📥 Importar código de pedido (cuando una tienda te lo manda por WhatsApp)</summary>
+            <div style="padding-top:10px;">
+              <textarea id="importOrderCode" style="min-height:60px; font-family: monospace; font-size: 0.7rem;" placeholder="Pegá acá el código que la tienda copia desde el catálogo..."></textarea>
+              <button onclick="importOrderCode()">Importar pedido</button>
+            </div>
+          </details>
+          <button class="secondary" style="margin-top:6px;" onclick="openBuyList()">🛒 Lista de compra consolidada (1688)</button>
+        </div>
+
+        </div><!-- /tab orders -->
+
+        <!-- TAB: PRODUCTOS -->
+        <div class="admin-tab-content" data-tab="products">
+
+        <div class="admin-section">
+          <h3>📦 Productos</h3>
+          <div id="adminProductList" class="admin-product-list"></div>
+          <button class="secondary" onclick="exportProductsExcel()" style="margin-top: 8px;">📊 Descargar Excel de control</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>🔗 Importar productos desde 1688</h3>
+          <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            <b>Paso 1:</b> Pegá uno o varios links 1688 (uno por línea). Click en "Pedir extracción a Claude" — se copia un prompt al portapapeles.<br>
+            <b>Paso 2:</b> Pegá ese prompt en el chat de Claude. Él te devolverá un JSON listo para importar.<br>
+            <b>Paso 3:</b> Pegá el JSON acá abajo y click "Importar productos".
+          </p>
+          <label>Links de 1688 (uno por línea)</label>
+          <textarea id="importLinks" style="min-height: 80px;" placeholder="https://detail.1688.com/offer/989807418840.html
+https://detail.1688.com/offer/982578255205.html"></textarea>
+          <button onclick="generarPromptClaude()">📋 Pedir extracción a Claude (copia prompt)</button>
+
+          <div style="margin-top:18px;">
+            <label>Pegá acá el JSON que te devuelva Claude</label>
+            <textarea id="importJson" style="min-height: 100px;" placeholder='[{"name":"...","material":"PP","cost":7,"weight":30,"models":["iPhone 17"],"colors":[{"name":"Blanco","img":"https://..."}]}]'></textarea>
+            <button onclick="importProducts()">✓ Importar productos</button>
+          </div>
+        </div>
+
+        </div><!-- /tab products -->
+
+        <!-- TAB: FÓRMULA -->
+        <div class="admin-tab-content" data-tab="formula">
+
+        <div class="admin-section">
+          <h3>💰 Fórmula de precios</h3>
+          <p style="font-size:0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+            Costo landed = (CNY × tipo cambio) + Logística (según tier de peso)<br>
+            Precio = Landed / (1 − Margen%) → margen 50% = mitad costo, mitad ganancia
+          </p>
+          <div class="form-row">
+            <div>
+              <label>CLP por CNY (¥)</label>
+              <input type="number" id="cf-cny" step="0.01">
+            </div>
+            <div>
+              <label>Margen sobre venta % (gross)</label>
+              <input type="number" id="cf-margin" step="5" min="0" max="95">
+            </div>
+            <div>
+              <label>Redondeo CLP</label>
+              <input type="number" id="cf-round" step="50">
+            </div>
+            <div>
+              <label>MOQ total pedido (u)</label>
+              <input type="number" id="cf-moqtot" step="10" placeholder="50">
+            </div>
+            <div>
+              <label>IVA % (en checkout)</label>
+              <input type="number" id="cf-iva" step="0.5" placeholder="19">
+            </div>
+            <div>
+              <label>Handling fijo CLP/u (Tiptrans + brokerage)</label>
+              <input type="number" id="cf-handling" step="50" placeholder="450">
+            </div>
+          </div>
+          <button onclick="saveFormula()">Guardar fórmula</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>📦 Niveles de descuento por volumen</h3>
+          <p style="font-size:0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+            Tiers basados en el <b>peso real</b> del carrito (que es como cobra DHL). Cuando suma X kg, se aplica el costo logístico de ese tier. Cada producto tiene peso configurado individualmente.
+          </p>
+          <table style="width:100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="text-align: left; color: var(--text-muted); font-size: 0.75rem;">
+                <th style="padding:6px 4px;">Desde (kg)</th>
+                <th style="padding:6px 4px;">Costo CLP/u</th>
+                <th style="padding:6px 4px;">Etiqueta visible</th>
+              </tr>
+            </thead>
+            <tbody id="tierRows"></tbody>
+          </table>
+          <button onclick="saveTiers()" style="margin-top:8px;">Guardar tiers</button>
+          <button class="secondary" onclick="recalcAll()">Recalcular precios</button>
+        </div>
+
+        </div><!-- /tab formula -->
+
+        <!-- TAB: TIENDA -->
+        <div class="admin-tab-content" data-tab="store">
+
+        <div class="admin-section">
+          <h3>🏪 Información de la tienda</h3>
+          <label>Nombre de la tienda</label>
+          <input id="st-name">
+          <label>Tagline / subtítulo</label>
+          <input id="st-tag">
+          <label>Clave de admin (cambiar)</label>
+          <input id="st-pass" type="text">
+          <button onclick="saveStore()">Guardar</button>
+        </div>
+
+        </div><!-- /tab store -->
+
+        <!-- TAB: BANCO -->
+        <div class="admin-tab-content" data-tab="bank">
+
+        <div class="admin-section">
+          <h3>🏦 Datos de transferencia</h3>
+          <label>Razón social</label>
+          <input id="bn-name">
+          <label>RUT</label>
+          <input id="bn-rut">
+          <div class="form-row">
+            <div>
+              <label>Banco</label>
+              <input id="bn-bank">
+            </div>
+            <div>
+              <label>Tipo cuenta</label>
+              <input id="bn-type" placeholder="Cuenta Corriente">
+            </div>
+          </div>
+          <label>N° cuenta</label>
+          <input id="bn-acct">
+          <label>Email comprobante</label>
+          <input id="bn-email" type="email">
+          <label>WhatsApp (formato +56912345678)</label>
+          <input id="bn-wa" placeholder="+56912345678">
+          <button onclick="saveBank()">Guardar</button>
+        </div>
+
+        </div><!-- /tab bank -->
+
+        <!-- TAB: DEPLOY -->
+        <div class="admin-tab-content" data-tab="deploy">
+
+        <div class="admin-section">
+          <h3>📡 Estado del catálogo</h3>
+          <div id="deployStatusCard" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 14px;">
+            <!-- renderizado por renderDeployStatus() -->
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h3>🚀 Publicar en Vercel (modo blindado)</h3>
+          <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            Genera un <code>index.html</code> <b>completamente sanitizado</b>:
+          </p>
+          <ul style="font-size:0.78rem; color: var(--text-muted); margin: 0 0 12px 18px; line-height: 1.5;">
+            <li>🖼 Imágenes embebidas en base64 (sin URLs externas)</li>
+            <li>🔒 Links de proveedor eliminados del HTML público</li>
+            <li>💰 Costos CNY del proveedor ocultos</li>
+            <li>🚫 Referencias textuales a la fuente reemplazadas</li>
+          </ul>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+            El archivo pesa más (~5-10 MB con todas las imágenes) pero es imposible que un cliente o IA detecte el origen.
+          </p>
+          <button onclick="exportHTMLForDeploy()">🛡 Descargar index.html blindado</button>
+        </div>
+
+        <div class="admin-section">
+          <h3>⚡ Auto-deploy a Vercel (un click)</h3>
+          <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            Configurá tu token <b>una vez</b> y después cada cambio se publica con <b>un click</b>. Sin descargar archivos, sin GitHub.
+          </p>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+            🔑 Conseguir token: <a href="https://vercel.com/account/settings/tokens" target="_blank" style="color: var(--accent);">vercel.com/account/settings/tokens</a> → "Create" → ámbito "Full Account"<br>
+            📦 Project ID: en tu dashboard de Vercel, Settings → General → "Project ID"
+          </p>
+          <label>Token Vercel</label>
+          <input id="vc-token" type="password" placeholder="Bearer token (empieza con 'v_...' o similar)">
+          <label>Project ID</label>
+          <input id="vc-projid" placeholder="prj_xxxxxxxxx">
+          <label>Project name (opcional)</label>
+          <input id="vc-projname" placeholder="aura-catalogo">
+          <button class="secondary" onclick="saveVercelConfig()">Guardar config</button>
+          <button onclick="publishToVercel()" style="background: #10b981; color: white;">🚀 Publicar a Vercel ahora</button>
+          <p style="font-size:0.7rem; color: var(--text-muted); margin-top: 8px;">
+            🔒 El token se guarda solo en tu navegador. NO se incluye nunca en el HTML público.
+          </p>
+        </div>
+
+        <div class="admin-section">
+          <h3>📦 GitHub sync (opcional, recomendado)</h3>
+          <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            Si lo configurás, después de cada deploy a Vercel <b>también se actualiza tu repo de GitHub</b>. Ventajas:
+          </p>
+          <ul style="font-size:0.78rem; color: var(--text-muted); margin: 0 0 12px 18px; line-height: 1.5;">
+            <li>📜 Historial completo de cambios (cada deploy = un commit)</li>
+            <li>🔄 GitHub y Vercel siempre sincronizados</li>
+            <li>↩️ Rollback fácil a cualquier versión anterior</li>
+            <li>🛡 Backup automático en cada cambio</li>
+          </ul>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+            🔑 Token: <a href="https://github.com/settings/tokens/new?scopes=repo&description=Aura%20Catalog" target="_blank" style="color: var(--accent);">github.com/settings/tokens/new</a> → ámbito "repo" → 90 días → Generate
+          </p>
+          <label>GitHub Personal Access Token</label>
+          <input id="gh-token" type="password" placeholder="ghp_xxx... o github_pat_xxx...">
+          <div class="form-row">
+            <div>
+              <label>Usuario / Org</label>
+              <input id="gh-owner" placeholder="nicolasmatulic">
+            </div>
+            <div>
+              <label>Nombre del repo</label>
+              <input id="gh-repo" placeholder="cases-theta o aura-catalog">
+            </div>
+            <div>
+              <label>Path del archivo</label>
+              <input id="gh-path" placeholder="index.html" value="index.html">
+            </div>
+            <div>
+              <label>Branch</label>
+              <input id="gh-branch" placeholder="main" value="main">
+            </div>
+          </div>
+          <button class="secondary" onclick="saveGithubConfig()">Guardar config GitHub</button>
+          <p style="font-size:0.7rem; color: var(--text-muted); margin-top: 8px;">
+            🔒 El PAT se guarda solo en tu navegador. NO se incluye nunca en el HTML público.
+          </p>
+        </div>
+
+        <div class="admin-section">
+          <h3>💾 Backup y restauración</h3>
+          <p style="font-size:0.82rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;">
+            Tu admin guarda todo en el navegador. Si borrás caché, cambiás de compu o algo se rompe, podés restaurar desde un backup JSON.
+          </p>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+            <b>Backup recomendado:</b> cada vez que importes productos nuevos → "Exportar JSON" → guardar en Drive/Dropbox.
+          </p>
+          <button class="secondary" onclick="exportData()">📥 Exportar backup (JSON)</button>
+          <details style="margin-top:14px;">
+            <summary>📤 Restaurar desde backup JSON</summary>
+            <div style="padding-top:10px;">
+              <label>Pegá el contenido del archivo aura-backup-XXXX.json</label>
+              <textarea id="restoreJson" style="min-height: 100px; font-family: monospace; font-size: 0.7rem;" placeholder='{ "version": "v5", "products": [...], "formula": {...}, "store": {...}, "bank": {...}, "orders": [...] }'></textarea>
+              <button onclick="restoreBackupJson()">↩️ Restaurar backup</button>
+              <p style="font-size:0.7rem; color: var(--text-muted); margin-top: 6px;">
+                ⚠️ Esto reemplaza tu state actual. Hacé export primero por si querés volver atrás.
+              </p>
+            </div>
+          </details>
+        </div>
+
+        <div class="admin-section">
+          <h3>⚠️ Datos</h3>
+          <p style="font-size:0.78rem; color: var(--text-muted); margin-bottom: 10px;">
+            Reset total. Borra todo: productos, fórmula, banco, pedidos, configs Vercel/GitHub. <b>Solo si querés empezar de cero.</b>
+          </p>
+          <button class="danger" onclick="resetAll()">🗑 Borrar todo</button>
+        </div>
+
+        </div><!-- /tab deploy -->
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Cache de imágenes en base64 (para que el catálogo funcione 100% offline) -->
+<script src="images-cache.js" onerror="console.warn('images-cache.js no encontrado, usando proxy weserv como fallback')"></script>
+
+<script>
+// ======= CONFIG =======
+// Margen sobre venta (gross margin): precio = landed / (1 - margen%)
+// logisticTiers por UNIDADES: a más unidades en el carrito, menor costo logístico/u
+const DEFAULT_FORMULA = {
+  cny: 130,
+  margin: 50,
+  round: 50,
+  iva: 19,                // IVA Chile 19% — se aplica en checkout sobre el neto
+  moqTotalUnits: 100,
+  handlingPerUnit: 450,   // Tiptrans + brokerage fijo por u (no varía con volumen)
+  logistics: 1000,        // fallback si no hay tiers
+  tiersV: 5,              // v5: removido tier Mínimo (era irrealista para consolidación)
+  logisticTiers: [
+    { minKg: 0,  costPerUnit: 1000, label: "Estándar" },
+    { minKg: 21, costPerUnit: 800,  label: "Mayorista" },
+    { minKg: 45, costPerUnit: 700,  label: "Mayorista premium" }
+  ]
+};
+const DEFAULT_STORE = { name: "Aura", tagline: "Catálogo", pass: "579318642" };
+const DEFAULT_BANK = {
+  name: "ESSENTIAL GROUP SPA",
+  rut: "77.901.981-0",
+  bank: "Global66 / GLOBAL CARD S.A",
+  type: "Cuenta Vista",
+  acct: "11649664",
+  email: "essential@inversionesmatulic.cl",
+  wa: "+56966789753"
+};
+
+// Producto: {id, name, brand, material, cost (CNY), weight (g), models[], colors[{id,name,img}], price (override)}
+const DEFAULT_PRODUCTS = [
+  {
+    id: "p1",
+    name: "Carcasa MagSafe aleación bicolor",
+    brand: "Apple",
+    material: "Aleación metal",
+    link: "https://detail.1688.com/offer/989807418840.html",
+    cost: 45,
+    weight: 38,
+    price: null,
+    models: ["iPhone 17 Pro", "iPhone 17 Pro Max"],
+    colors: [
+      { id: "c1", name: "Naranja MagSafe", img: "https://cbu01.alicdn.com/img/ibank/O1CN01UuI6SW1EcQRAPowrp_!!2672550372-0-cib.jpg" },
+      { id: "c2", name: "Azul MagSafe", img: "https://cbu01.alicdn.com/img/ibank/O1CN019aedFP1EcQR9ehhti_!!2672550372-0-cib.jpg" },
+      { id: "c3", name: "Plata MagSafe", img: "https://cbu01.alicdn.com/img/ibank/O1CN01T1zZ5v1EcQR9GQwsb_!!2672550372-0-cib.jpg" },
+      { id: "c4", name: "Naranja", img: "https://cbu01.alicdn.com/img/ibank/O1CN01gZW7eX1EcQRA5a3qi_!!2672550372-0-cib.jpg" },
+      { id: "c5", name: "Azul", img: "https://cbu01.alicdn.com/img/ibank/O1CN01czKmvJ1EcQR9Ajt8g_!!2672550372-0-cib.jpg" },
+      { id: "c6", name: "Plata", img: "https://cbu01.alicdn.com/img/ibank/O1CN01NPIzHX1EcQR9AjYLz_!!2672550372-0-cib.jpg" }
+    ]
+  },
+  {
+    id: "p2",
+    name: "Carcasa PP ultra-thin magnética — patrón ondas",
+    brand: "Apple",
+    material: "PP (polipropileno)",
+    link: "https://detail.1688.com/offer/982578255205.html",
+    cost: 7,
+    weight: 30,
+    price: null,
+    models: ["iPhone 17", "iPhone 17 Air", "iPhone 17 Pro", "iPhone 17 Pro Max"],
+    colors: [
+      { id: "c1", name: "Transparente blanco", img: "https://cbu01.alicdn.com/img/ibank/O1CN01fYnbjg1lijCbY9VVT_!!2843344853-0-cib.jpg" },
+      { id: "c2", name: "Transparente negro", img: "https://cbu01.alicdn.com/img/ibank/O1CN01qVSk5f1lijCcR4rao_!!2843344853-0-cib.jpg" },
+      { id: "c3", name: "Transparente azul", img: "https://cbu01.alicdn.com/img/ibank/O1CN01tsa3OZ1lijCdnGO4w_!!2843344853-0-cib.jpg" },
+      { id: "c4", name: "Coral", img: "https://cbu01.alicdn.com/img/ibank/O1CN01aLPflm1lijCdCgiOf_!!2843344853-0-cib.jpg" },
+      { id: "c5", name: "Azul medianoche", img: "https://cbu01.alicdn.com/img/ibank/O1CN01GeuZDl1lijCc0PFmE_!!2843344853-0-cib.jpg" }
+    ]
+  }
+];
+
+// ======= STATE =======
+function load(key, def) {
+  try { return JSON.parse(localStorage.getItem("cat_" + key)) ?? def; }
+  catch { return def; }
+}
+function save(key) { localStorage.setItem("cat_" + key, JSON.stringify(state[key])); }
+
+let state = {
+  products: load("products", DEFAULT_PRODUCTS),
+  formula: load("formula", DEFAULT_FORMULA),
+  store: load("store", DEFAULT_STORE),
+  bank: load("bank", DEFAULT_BANK),
+  cart: load("cart", {}),
+  orders: load("orders", []),
+  vercel: load("vercel", { token: "", projectId: "", projectName: "" }),
+  github: load("github", { token: "", owner: "", repo: "", path: "index.html", branch: "main" }),
+  meta: load("meta", { lastChangeAt: null, lastDeployAt: null, lastDeployUrl: "", lastDeployStatus: "", lastGithubCommit: "" }),
+  isAdmin: false,
+  activeBrand: null,
+  activeModel: null,
+  pdProduct: null,
+  pdSelectedModel: null,
+  pdHeroColorId: null
+};
+// Migración: agregar/actualizar tiers a la versión actual
+if (!state.formula.logisticTiers || !Array.isArray(state.formula.logisticTiers) || (state.formula.tiersV || 0) < (DEFAULT_FORMULA.tiersV || 0)) {
+  state.formula.logisticTiers = DEFAULT_FORMULA.logisticTiers;
+  state.formula.tiersV = DEFAULT_FORMULA.tiersV;
+  save("formula");
+}
+if (state.formula.moqTargetGrams && !state.formula.moqTotalUnits) {
+  state.formula.moqTotalUnits = 50;
+  delete state.formula.moqTargetGrams;
+  save("formula");
+}
+// Migración: agregar handlingPerUnit si no existe
+if (typeof state.formula.handlingPerUnit === "undefined") {
+  state.formula.handlingPerUnit = DEFAULT_FORMULA.handlingPerUnit;
+  save("formula");
+}
+// Migración: actualizar imágenes con URLs incorrectas (las viejas tomaban marketing en vez de SKU thumbs)
+const OLD_BAD_URLS = [
+  "O1CN017xYWw81EcQRBGi123", // p1c1 viejo
+  "O1CN01kmQxSf1EcQRAUljgb", // p1c2 viejo
+  "O1CN01Id1RlS1EcQRAAWWtH", // p1c3 viejo
+  "O1CN01yX4OrH1EcQRBEMMDQ", // p1c4 viejo
+  "O1CN01cjlWsj1EcQRA3Prlj", // p1c5 viejo
+  "O1CN01ENrJSe1EcQRBLwSXt", // p1c6 viejo
+  "O1CN01c9u2jN1lijCc0N6Yt", // p2c1 viejo
+  "O1CN014T6XNX1lijCXExIF9", // p2c2 viejo
+  "O1CN01jEay2P1lijCdJBz3U", // p2c3 viejo
+  "O1CN018In6eK1lijCcqdq7U", // p2c4 viejo
+  "O1CN01PuXbz31lijCcqaDYu"  // p2c5 viejo
+];
+const hasOldUrls = state.products.some(p => (p.colors || []).some(c => OLD_BAD_URLS.some(id => (c.img || "").includes(id))));
+if (hasOldUrls) {
+  // Reemplazar productos por defecto (URLs correctas) — solo si tiene los productos default originales
+  const isDefaultProducts = state.products.length <= 2 && state.products.every(p => p.id === "p1" || p.id === "p2");
+  if (isDefaultProducts) {
+    state.products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    save("products");
+    console.log("Migración: URLs de imágenes actualizadas a SKU thumbs reales");
+  }
+}
+// Migración: agregar iva si no existe
+if (typeof state.formula.iva === "undefined") {
+  state.formula.iva = DEFAULT_FORMULA.iva;
+  save("formula");
+}
+// Migración: rebrand de "Essential" o "Mi Tienda" → "Aura"
+if (state.store.name === "Essential" || state.store.name === "Mi Tienda") {
+  state.store.name = "Aura";
+  save("store");
+}
+// Migración: actualizar clave default vieja a la nueva
+if (state.store.pass === "admin1688") {
+  state.store.pass = "579318642";
+  save("store");
+}
+// Migración: subir MOQ default de 50 a 100
+if (state.formula.moqTotalUnits === 50) {
+  state.formula.moqTotalUnits = 100;
+  save("formula");
+}
+// Migración: tagline simplificado
+if (state.store.tagline === "Catálogo Mayorista · Importación directa" || state.store.tagline === "Catálogo Mayorista · Envío DHL desde China") {
+  state.store.tagline = "Catálogo";
+  save("store");
+}
+// Migración: email Essential
+if (state.bank.email === "nmatulic@inversionesmatulic.cl") {
+  state.bank.email = "essential@inversionesmatulic.cl";
+  save("bank");
+}
+
+// ======= FÓRMULA =======
+function calcPrice(p) {
+  if (p.price && p.price > 0) return p.price;
+  const f = state.formula;
+  const costCLP = (p.cost || 0) * f.cny;
+  // Logística = DHL del tier activo + handling Tiptrans/brokerage fijo
+  const tier = getCurrentTier();
+  const dhl = tier ? tier.costPerUnit : (f.logistics || 1130);
+  const handling = f.handlingPerUnit || 0;
+  const landed = costCLP + dhl + handling;
+  // Margen sobre venta: precio = landed / (1 - margen)
+  const m = Math.min(99, Math.max(0, (f.margin || 0))) / 100;
+  const sale = landed / (1 - m);
+  const round = f.round || 50;
+  return Math.ceil(sale / round) * round;
+}
+
+const fmt = n => "$" + Math.round(n).toLocaleString("es-CL");
+function escapeHtml(s) {
+  return String(s || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// Proxy de imágenes: 1° busca en IMG_CACHE (base64 local), 2° si url no es http (modo sanitizado), busca por url como cacheId, 3° proxea por weserv
+function proxyImg(url, width, cacheId) {
+  // 1) Cache directo por cacheId
+  if (cacheId && window.IMG_CACHE && window.IMG_CACHE[cacheId]) {
+    const cached = window.IMG_CACHE[cacheId];
+    if (cached && typeof cached === "string" && cached.length > 200 && cached.startsWith("data:image/")) {
+      return cached;
+    }
+  }
+  // 2) Modo sanitizado: si url no es http/data/path, asumir que es un cacheId
+  if (url && typeof url === "string" && !url.startsWith("http") && !url.startsWith("data:") && !url.startsWith("/")) {
+    if (window.IMG_CACHE && window.IMG_CACHE[url]) {
+      const cached = window.IMG_CACHE[url];
+      if (cached && cached.length > 200 && cached.startsWith("data:image/")) return cached;
+    }
+    return ""; // En modo sanitizado, no hay fallback externo
+  }
+  // 3) URL normal: proxear via weserv si externa
+  if (!url) return "";
+  if (url.startsWith("data:") || url.startsWith("/") || url.includes("images.weserv.nl")) return url;
+  const clean = url.replace(/^https?:\/\//, "");
+  const w = width ? "&w=" + width + "&fit=cover" : "";
+  return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + w;
+}
+
+// ======= CART =======
+const cartKey = (pid, model, cid) => `${pid}::${model}::${cid}`;
+function getCartQty(pid, model, cid) { return state.cart[cartKey(pid, model, cid)] || 0; }
+function setCartQty(pid, model, cid, qty) {
+  qty = Math.max(0, parseInt(qty) || 0);
+  const k = cartKey(pid, model, cid);
+  if (qty === 0) delete state.cart[k]; else state.cart[k] = qty;
+  save("cart");
+  updateSummary();
+}
+function getProductTotalQty(pid) {
+  let q = 0;
+  for (const k in state.cart) if (k.startsWith(pid + "::")) q += state.cart[k];
+  return q;
+}
+// Suma todas las qty de una publicación para el modelo activo (mezclando colores)
+function getProductModelTotalQty(pid, model) {
+  let q = 0;
+  for (const k in state.cart) {
+    const [kpid, kmodel] = k.split("::");
+    if (kpid === pid && kmodel === model) q += state.cart[k];
+  }
+  return q;
+}
+
+// ======= TIERS LOGÍSTICA por PESO REAL DHL =======
+function getCartTotalUnits() {
+  let n = 0;
+  for (const k in state.cart) n += state.cart[k];
+  return n;
+}
+function getCartTotalWeightKg() {
+  let g = 0;
+  for (const k in state.cart) {
+    const [pid] = k.split("::");
+    const p = state.products.find(x => x.id === pid);
+    if (!p) continue;
+    g += (p.weight || 50) * state.cart[k];
+  }
+  return g / 1000;
+}
+function getSortedTiers() {
+  return ((state.formula.logisticTiers || []).slice()).sort((a, b) => (a.minKg || 0) - (b.minKg || 0));
+}
+function getCurrentTier() {
+  const tiers = getSortedTiers();
+  if (!tiers.length) return null;
+  const w = getCartTotalWeightKg();
+  let current = tiers[0];
+  for (const t of tiers) if (w >= (t.minKg || 0)) current = t;
+  return current;
+}
+function getNextTier() {
+  const tiers = getSortedTiers();
+  const w = getCartTotalWeightKg();
+  for (const t of tiers) if (w < (t.minKg || 0)) return t;
+  return null;
+}
+
+// ======= RENDER (vista por marca + modelo) =======
+
+// Detectar marca a partir del modelo si el producto no la tiene seteada
+function detectBrand(p) {
+  if (p.brand) return p.brand;
+  const m = (p.models || [])[0] || "";
+  if (/iphone/i.test(m)) return "Apple";
+  if (/galaxy|samsung/i.test(m)) return "Samsung";
+  if (/xiaomi|redmi|mi\s/i.test(m)) return "Xiaomi";
+  if (/huawei|p\d|mate/i.test(m)) return "Huawei";
+  if (/honor/i.test(m)) return "Honor";
+  if (/oneplus|op /i.test(m)) return "OnePlus";
+  if (/realme/i.test(m)) return "Realme";
+  return "Otros";
+}
+
+const BRAND_ORDER = ["Apple", "Samsung", "Xiaomi", "Huawei", "Honor", "OnePlus", "Realme", "Otros"];
+
+function getAllBrands() {
+  const brands = new Set();
+  for (const p of state.products) brands.add(detectBrand(p));
+  return Array.from(brands).sort((a, b) => {
+    const ia = BRAND_ORDER.indexOf(a), ib = BRAND_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
+function getAllModels(brand) {
+  const models = new Set();
+  for (const p of state.products) {
+    if (brand && detectBrand(p) !== brand) continue;
+    for (const m of (p.models || [])) models.add(m);
+  }
+  // Orden lógico para iPhone (más recientes primero)
+  const order = ["iPhone 17 Pro Max", "iPhone 17 Pro", "iPhone 17 Air", "iPhone 17",
+                 "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16 Plus", "iPhone 16",
+                 "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15",
+                 "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14"];
+  return Array.from(models).sort((a, b) => {
+    const ia = order.indexOf(a), ib = order.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
+function renderBrandTabs() {
+  const el = document.getElementById("brandTabs");
+  const brands = getAllBrands();
+  if (!brands.length) { el.innerHTML = ""; return; }
+  if (!state.activeBrand || !brands.includes(state.activeBrand)) state.activeBrand = brands[0];
+  el.innerHTML = brands.map(b => {
+    // Contar variantes (colores) por marca, no publicaciones
+    const count = state.products
+      .filter(p => detectBrand(p) === b)
+      .reduce((sum, p) => sum + (p.colors?.length || 0), 0);
+    return `<button class="brand-tab ${b === state.activeBrand ? 'active' : ''}" onclick="selectActiveBrand('${escapeAttr(b)}')">${escapeHtml(b)}<span class="count">${count}</span></button>`;
+  }).join("");
+}
+
+function renderTabs() {
+  renderBrandTabs();
+  const tabsEl = document.getElementById("modelTabs");
+  const models = getAllModels(state.activeBrand);
+  if (!models.length) { tabsEl.innerHTML = ""; return; }
+  if (!state.activeModel || !models.includes(state.activeModel)) state.activeModel = models[0];
+  tabsEl.innerHTML = models.map(m => {
+    // Contar variantes (colores) compatibles con este modelo, no publicaciones
+    const count = state.products
+      .filter(p => detectBrand(p) === state.activeBrand && (p.models || []).includes(m))
+      .reduce((sum, p) => sum + (p.colors?.length || 0), 0);
+    return `<div class="model-tab ${m === state.activeModel ? 'active' : ''}" onclick="selectActiveModel('${escapeAttr(m)}')">${escapeHtml(m)}<span class="count">${count}</span></div>`;
+  }).join("");
+}
+
+function selectActiveBrand(b) {
+  state.activeBrand = b;
+  state.activeModel = null; // se recalcula en renderTabs
+  renderTabs();
+  renderProducts();
+}
+
+function selectActiveModel(m) {
+  state.activeModel = m;
+  renderTabs();
+  renderProducts();
+}
+
+function renderProducts() {
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+  if (!state.products.length) {
+    grid.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  const model = state.activeModel;
+
+  // Construir lista flat de variantes: cada (producto × color) = una card
+  // Filtramos por marca activa Y modelo activo
+  const brand = state.activeBrand;
+  const variants = [];
+  for (const p of state.products) {
+    if (brand && detectBrand(p) !== brand) continue;
+    if (!(p.models || []).includes(model)) continue;
+    for (const c of (p.colors || [])) {
+      variants.push({ p, c });
+    }
+  }
+
+  if (!variants.length) {
+    grid.innerHTML = `<div class="no-products-for-model">No hay productos compatibles con ${escapeHtml(model)} todavía.</div>`;
+    return;
+  }
+
+  const counter = `<div class="variant-count">${variants.length} ${variants.length===1?'producto':'productos'} disponibles para ${escapeHtml(model)}</div>`;
+
+  grid.innerHTML = counter + variants.map(({p, c}) => {
+    const price = calcPrice(p);
+    const q = getCartQty(p.id, model, c.id);
+    return `
+      <div class="variant-card ${q>0?'has-qty':''}">
+        <div class="variant-card-img" onclick="openProduct('${p.id}','${c.id}')">
+          <img src="${proxyImg(c.img, 400, p.id + c.id)}" alt="${escapeAttr(c.name)}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23334155%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%22150%22 y=%22150%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2218%22%3ESin imagen%3C/text%3E%3C/svg%3E'">
+          ${q>0 ? `<div class="variant-qty-badge">${q} u</div>` : ""}
+        </div>
+        <div class="variant-card-body">
+          <div class="variant-card-name" title="${escapeAttr(p.name)}">${escapeHtml(p.name)}</div>
+          <div class="variant-card-color-row">
+            <div class="variant-card-color-dot" style="background-image:url('${proxyImg(c.img, 60, p.id + c.id)}')"></div>
+            <div class="variant-card-color" title="${escapeAttr(c.name)}">${escapeHtml(c.name)}</div>
+          </div>
+          <div class="variant-card-tags">
+            <span class="vc-tag vc-tag-model"><span class="vc-tag-icon">📱</span>${escapeHtml(model)}</span>
+            ${p.material ? `<span class="vc-tag"><span class="vc-tag-icon">✦</span>${escapeHtml(p.material)}</span>` : ""}
+          </div>
+          <div class="variant-card-price">${fmt(price)}<small>/u neto + IVA</small></div>
+          <div class="variant-card-qty">
+            <button class="qty-btn" onclick="bumpQty('${p.id}','${c.id}',-1)">−</button>
+            <input type="number" class="qty-input" min="0" value="${q}" onchange="setQtyInline('${p.id}','${c.id}',this.value)">
+            <button class="qty-btn" onclick="bumpQty('${p.id}','${c.id}',1)">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Helpers para qty inline (usan el activeModel actual)
+function bumpQty(pid, cid, d) {
+  const m = state.activeModel;
+  const q = getCartQty(pid, m, cid) + d;
+  setCartQty(pid, m, cid, q);
+  renderProducts();
+}
+function setQtyInline(pid, cid, q) {
+  const m = state.activeModel;
+  setCartQty(pid, m, cid, q);
+  renderProducts();
+}
+
+// ======= PRODUCT DETAIL =======
+function openProduct(pid, colorId) {
+  const p = state.products.find(x => x.id === pid);
+  if (!p) return;
+  state.pdProduct = p;
+  // Si el producto soporta el modelo activo, usarlo. Si no, primer modelo del producto
+  state.pdSelectedModel = (p.models || []).includes(state.activeModel)
+    ? state.activeModel
+    : (p.models || [])[0] || "";
+  state.pdHeroColorId = colorId || (p.colors?.[0] || {}).id || null;
+  document.getElementById("pdName").textContent = p.name;
+  renderProductDetail();
+  document.getElementById("productModal").classList.add("active");
+}
+function closeProduct() {
+  document.getElementById("productModal").classList.remove("active");
+  state.pdProduct = null;
+  renderProducts(); // refresh badges
+}
+
+function renderProductDetail() {
+  const p = state.pdProduct;
+  if (!p) return;
+  const heroColor = p.colors.find(c => c.id === state.pdHeroColorId) || p.colors[0];
+  const price = calcPrice(p);
+  const model = state.pdSelectedModel;
+
+  // Swatches de TODOS los colores de la publicación
+  const swatchesHtml = (p.colors || []).length > 1 ? `
+    <div style="margin-top: 16px;">
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">${p.colors.length} colores disponibles · click para ver</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        ${p.colors.map(c => `
+          <div onclick="setPdHeroColor('${c.id}')" title="${escapeAttr(c.name)}" style="width: 64px; cursor: pointer; text-align: center;">
+            <div style="width: 64px; height: 64px; border-radius: 8px; background-image: url('${proxyImg(c.img, 120, p.id + c.id)}'); background-size: cover; background-position: center; border: 2px solid ${c.id === state.pdHeroColorId ? 'var(--accent)' : 'transparent'}; transition: border-color 0.15s;"></div>
+            <div style="font-size: 0.62rem; color: ${c.id === state.pdHeroColorId ? 'var(--accent)' : 'var(--text-muted)'}; margin-top: 4px; line-height: 1.2; height: 2.4em; overflow: hidden;">${escapeHtml(c.name)}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  ` : "";
+
+  const modelsHtml = (p.models || []).length > 1 ? `
+    <div style="margin-top: 14px;">
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px;">Compatible con ${p.models.length} modelos iPhone</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+        ${p.models.map(m => `<span class="vc-tag ${m === model ? 'vc-tag-model' : ''}" style="font-size: 0.72rem;">${m === model ? '📱 ' : ''}${escapeHtml(m)}</span>`).join("")}
+      </div>
+    </div>
+  ` : "";
+
+  const html = `
+    <div class="pd-hero" style="max-height: 360px; aspect-ratio: 1;">
+      <img src="${proxyImg(heroColor.img, 1000, p.id + heroColor.id)}" alt="${escapeHtml(heroColor.name)}">
+    </div>
+    <div style="margin-top: 14px;">
+      <div style="font-size: 1.25rem; font-weight: 700; margin-bottom: 4px;">${escapeHtml(heroColor.name)}</div>
+      <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">${escapeHtml(p.name)}</div>
+      <div class="variant-card-tags" style="margin-bottom: 10px;">
+        <span class="vc-tag vc-tag-model"><span class="vc-tag-icon">📱</span>${escapeHtml(model)}</span>
+        ${p.material ? `<span class="vc-tag"><span class="vc-tag-icon">✦</span>${escapeHtml(p.material)}</span>` : ""}
+      </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent);">${fmt(price)}</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">/u neto + IVA</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+        <span style="color: #fbbf24;">✈</span> Envío 7–10 días
+      </div>
+      ${swatchesHtml}
+      ${modelsHtml}
+    </div>
+  `;
+  document.getElementById("pdBody").innerHTML = html;
+}
+
+// Cambiar color "hero" del lightbox sin cerrar el modal
+function setPdHeroColor(cid) {
+  state.pdHeroColorId = cid;
+  renderProductDetail();
+}
+function escapeAttr(s) { return String(s || "").replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
+
+function selectModel(m) {
+  state.pdSelectedModel = m;
+  renderProductDetail();
+}
+function setHero(cid) {
+  state.pdHeroColorId = cid;
+  renderProductDetail();
+}
+function changeColorQty(cid, d) {
+  const q = getCartQty(state.pdProduct.id, state.pdSelectedModel, cid) + d;
+  setCartQty(state.pdProduct.id, state.pdSelectedModel, cid, q);
+  renderProductDetail();
+}
+function setColorQty(cid, q) {
+  setCartQty(state.pdProduct.id, state.pdSelectedModel, cid, q);
+  renderProductDetail();
+}
+
+// ======= SUMMARY =======
+function updateSummary() {
+  let count = 0, total = 0;
+  for (const k in state.cart) {
+    const [pid, , cid] = k.split("::");
+    const p = state.products.find(x => x.id === pid);
+    if (!p) continue;
+    count += state.cart[k];
+    total += state.cart[k] * calcPrice(p);
+  }
+  const ivaPct = state.formula.iva || 0;
+  const ivaAmount = Math.round(total * ivaPct / 100);
+  const totalConIva = total + ivaAmount;
+  const bar = document.getElementById("summaryBar");
+  bar.classList.toggle("active", count > 0);
+  document.getElementById("summaryCount").textContent = `${count} ${count===1?"unidad":"unidades"} · neto ${fmt(total)}`;
+  // Mantener el label "con IVA" separado
+  const totalEl = document.getElementById("summaryTotal");
+  totalEl.innerHTML = `${fmt(totalConIva)} <small id="summaryTotalLabel" style="font-size:0.6rem; color: var(--text-muted); font-weight: 400;">con IVA</small>`;
+  // MOQ total
+  const moq = state.formula.moqTotalUnits || 50;
+  const moqMet = count >= moq;
+  const moqPct = Math.min(100, (count / moq) * 100);
+  const moqEl = document.getElementById("summaryMOQ");
+  if (moqEl) {
+    moqEl.classList.toggle("met", moqMet);
+    document.getElementById("summaryMOQLabel").textContent =
+      moqMet ? `✓ Mínimo cumplido: ${count}/${moq} u` : `⚠ Mínimo: ${count}/${moq} u (faltan ${moq - count})`;
+    document.getElementById("summaryMOQProgress").style.width = moqPct + "%";
+  }
+  // Tier de logística (descuento por volumen)
+  // Display: convertir kg restantes a unidades aprox usando peso promedio del carrito
+  const tierEl = document.getElementById("summaryTier");
+  if (tierEl) {
+    const tier = getCurrentTier();
+    const next = getNextTier();
+    const totalKg = getCartTotalWeightKg();
+    const totalU = getCartTotalUnits();
+    const tiers = getSortedTiers();
+    const upgraded = tier && tiers.length > 1 && (tier.minKg || 0) > 0;
+    tierEl.classList.toggle("upgraded", upgraded);
+    // Peso promedio por unidad (del carrito o fallback 40g)
+    const avgWeightG = totalU > 0 ? (totalKg * 1000 / totalU) : 40;
+    let txt = "";
+    if (tier) {
+      txt = `Nivel <b>${escapeHtml(tier.label)}</b> activo`;
+      if (next) {
+        const faltaKg = (next.minKg || 0) - totalKg;
+        const faltaU = Math.max(1, Math.ceil(faltaKg * 1000 / avgWeightG));
+        const ahorroPorU = tier.costPerUnit - next.costPerUnit;
+        txt += ` · Faltan <b>${faltaU} ${faltaU===1?'carcasa':'carcasas'}</b> para <b>${escapeHtml(next.label)}</b>`;
+        if (ahorroPorU > 0) txt += ` (ahorro $${ahorroPorU}/u)`;
+      } else {
+        txt = `🎉 Mejor nivel activo: <b>${escapeHtml(tier.label)}</b>`;
+      }
+    }
+    document.getElementById("summaryTierLabel").innerHTML = txt;
+  }
+}
+
+// ======= CHECKOUT =======
+function openCheckout() {
+  const list = document.getElementById("orderList");
+  let total = 0;
+  list.innerHTML = "";
+  for (const k in state.cart) {
+    const [pid, model, cid] = k.split("::");
+    const p = state.products.find(x => x.id === pid);
+    if (!p) continue;
+    const c = (p.colors || []).find(c => c.id === cid) || {name: "—", img: ""};
+    const qty = state.cart[k];
+    const price = calcPrice(p);
+    const subtotal = qty * price;
+    total += subtotal;
+    list.innerHTML += `
+      <div class="order-item">
+        <img src="${proxyImg(c.img, 80, p.id + cid)}">
+        <div class="info">
+          <div class="nm">${escapeHtml(p.name)}</div>
+          <div class="meta">${escapeHtml(model)} · ${escapeHtml(c.name)}</div>
+        </div>
+        <span class="qty">×${qty}</span>
+        <span class="price">${fmt(subtotal)}</span>
+      </div>`;
+  }
+  if (!list.innerHTML) {
+    list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">Sin productos en el pedido</p>';
+  }
+
+  // Validar MOQ TOTAL del pedido y mostrar advertencia si está por debajo
+  let totalUnits = 0;
+  for (const k in state.cart) totalUnits += state.cart[k];
+  const moqTotal = state.formula.moqTotalUnits || 50;
+  const existingWarn = document.getElementById("moqWarnings");
+  if (existingWarn) existingWarn.remove();
+  if (totalUnits < moqTotal && totalUnits > 0) {
+    const faltan = moqTotal - totalUnits;
+    const warnHtml = `
+      <div id="moqWarnings" style="background: rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.35); padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:0.82rem;">
+        <div style="color: var(--danger); font-weight:600; margin-bottom:4px;">⚠ Pedido por debajo del mínimo</div>
+        <div style="color: var(--text-muted); padding:2px 0;">Tienes <b>${totalUnits} u</b>, el mínimo es <b>${moqTotal} u</b> (faltan <b>${faltan} u</b>).</div>
+        <div style="font-size:0.75rem; color: var(--text-muted); margin-top:4px;">Puedes confirmar igual, pero llegar al mínimo asegura mejor tarifa de flete consolidado.</div>
+      </div>`;
+    list.insertAdjacentHTML("afterend", warnHtml);
+  }
+
+  // Desglose con IVA + total carcasas (totalUnits ya calculado arriba para MOQ)
+  const ivaPct = state.formula.iva || 0;
+  const ivaAmount = Math.round(total * ivaPct / 100);
+  const totalConIva = total + ivaAmount;
+  document.getElementById("orderTotalUnits").textContent = `${totalUnits} ${totalUnits===1?'carcasa':'carcasas'}`;
+  document.getElementById("orderSubtotal").textContent = fmt(total);
+  document.getElementById("orderIvaPct").textContent = ivaPct;
+  document.getElementById("orderIvaAmount").textContent = fmt(ivaAmount);
+  document.getElementById("orderTotal").textContent = fmt(totalConIva);
+  const b = state.bank;
+  document.getElementById("bk-name").textContent = b.name || "—";
+  document.getElementById("bk-rut").textContent = b.rut || "—";
+  document.getElementById("bk-bank").textContent = b.bank || "—";
+  document.getElementById("bk-type").textContent = b.type || "—";
+  document.getElementById("bk-acct").textContent = b.acct || "—";
+  document.getElementById("bk-email").textContent = b.email || "—";
+  document.getElementById("checkoutModal").classList.add("active");
+}
+function closeCheckout() { document.getElementById("checkoutModal").classList.remove("active"); }
+
+function buildOrderText() {
+  let txt = `*Pedido Mayorista — ${state.store.name}*\n\n`;
+  let total = 0, totalQ = 0;
+  for (const k in state.cart) {
+    const [pid, model, cid] = k.split("::");
+    const p = state.products.find(x => x.id === pid);
+    if (!p) continue;
+    const c = (p.colors || []).find(c => c.id === cid) || {name: "—"};
+    const qty = state.cart[k];
+    const price = calcPrice(p);
+    total += qty * price;
+    totalQ += qty;
+    txt += `• ${p.name} — ${model} — ${c.name} ×${qty} = ${fmt(qty*price)}\n`;
+  }
+  const ivaPct = state.formula.iva || 0;
+  const ivaAmount = Math.round(total * ivaPct / 100);
+  const totalConIva = total + ivaAmount;
+  txt += `\nSubtotal neto (${totalQ} u): ${fmt(total)}`;
+  txt += `\nIVA ${ivaPct}%: ${fmt(ivaAmount)}`;
+  txt += `\n*Total a transferir: ${fmt(totalConIva)}*`;
+  return txt;
+}
+function copyOrder() {
+  navigator.clipboard.writeText(buildOrderText()).then(() => toast("Pedido copiado"));
+}
+
+// ======= Customer billing (Persona / Empresa) =======
+let _customerType = "persona"; // estado del selector
+
+function selectCustomerType(type) {
+  _customerType = type;
+  document.querySelectorAll(".ctype-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.type === type);
+  });
+  // Actualizar label del primer campo
+  const lbl = document.getElementById("cust-name-label");
+  const nameInput = document.getElementById("cust-name");
+  if (type === "empresa") {
+    if (lbl) lbl.textContent = "Razón Social *";
+    if (nameInput) nameInput.placeholder = "Ej: INVERSIONES MATULIC SPA";
+    document.getElementById("cust-giro-row").style.display = "block";
+  } else {
+    if (lbl) lbl.textContent = "Nombre completo *";
+    if (nameInput) nameInput.placeholder = "Ej: Juan Pérez";
+    document.getElementById("cust-giro-row").style.display = "none";
+  }
+}
+
+function validateAndGetCustomer() {
+  const fields = [
+    { id: "cust-name",    label: _customerType === "empresa" ? "Razón Social" : "Nombre" },
+    { id: "cust-rut",     label: "RUT" },
+    { id: "cust-address", label: "Dirección" },
+    { id: "cust-email",   label: "Email" },
+    { id: "cust-phone",   label: "Teléfono" }
+  ];
+  let firstError = null;
+  const data = { type: _customerType };
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    const v = (el?.value || "").trim();
+    if (!v) {
+      el.classList.add("error");
+      if (!firstError) firstError = f.label;
+    } else {
+      el.classList.remove("error");
+    }
+    data[f.id.replace("cust-", "")] = v;
+  });
+  // Validación email
+  if (data.email && !data.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    document.getElementById("cust-email").classList.add("error");
+    if (!firstError) firstError = "Email (formato inválido)";
+  }
+  // Giro: opcional, solo se guarda si es empresa
+  data.giro = _customerType === "empresa" ? (document.getElementById("cust-giro")?.value || "").trim() : "";
+  if (firstError) {
+    toast(`Falta o inválido: ${firstError}`);
+    return null;
+  }
+  return data;
+}
+
+// Construye el objeto de pedido a partir del carrito actual
+function buildOrderObject(customer) {
+  const items = [];
+  let totalNeto = 0, totalUnits = 0, totalKg = 0;
+  for (const k in state.cart) {
+    const [pid, model, cid] = k.split("::");
+    const p = state.products.find(x => x.id === pid);
+    if (!p) continue;
+    const c = (p.colors || []).find(c => c.id === cid) || {name: "—", img: ""};
+    const qty = state.cart[k];
+    const price = calcPrice(p);
+    items.push({
+      pid, productName: p.name,
+      model, cid, colorName: c.name, colorImg: c.img,
+      qty, priceNeto: price,
+      weightG: p.weight || 50,
+      material: p.material || "",
+      link: p.link || ""
+    });
+    totalNeto += qty * price;
+    totalUnits += qty;
+    totalKg += qty * (p.weight || 50) / 1000;
+  }
+  const ivaPct = state.formula.iva || 0;
+  const ivaAmount = Math.round(totalNeto * ivaPct / 100);
+  const tier = getCurrentTier();
+  return {
+    id: "ord_" + Date.now() + Math.random().toString(36).slice(2,5),
+    date: new Date().toISOString(),
+    // Datos completos de facturación
+    customer: customer || { type: "persona", name: "", rut: "", address: "", email: "", phone: "", giro: "" },
+    customerName: customer?.name || "",  // alias para compatibilidad
+    items, totalNeto, ivaPct, ivaAmount,
+    totalConIva: totalNeto + ivaAmount,
+    totalUnits,
+    totalKg: Math.round(totalKg * 100) / 100,
+    tier: tier ? tier.label : "—",
+    status: "new",
+    notes: ""
+  };
+}
+
+function confirmAndSendWhatsApp() {
+  const wa = (state.bank.wa || "").replace(/\D/g, "");
+  if (!wa) return toast("Configura un WhatsApp en admin");
+  const customer = validateAndGetCustomer();
+  if (!customer) return;
+  const order = buildOrderObject(customer);
+  state.orders.push(order);
+  save("orders");
+  // Guardar el último código en window para que admin pueda copiarlo si lo necesita
+  window._lastOrderCode = encodeOrderCode(order);
+  // Mensaje WhatsApp LIMPIO — sin código, solo datos legibles
+  let txt = `*${customer.type === "empresa" ? "🏢" : "👤"} ${customer.name}*\n`;
+  txt += `RUT: ${customer.rut}\n`;
+  txt += `Dirección: ${customer.address}\n`;
+  if (customer.giro) txt += `Giro: ${customer.giro}\n`;
+  txt += `Email: ${customer.email}\n`;
+  txt += `Tel: ${customer.phone}\n\n`;
+  txt += buildOrderText();
+  txt += `\n\n_(Adjunto comprobante de transferencia)_`;
+  const msg = encodeURIComponent(txt);
+  window.open(`https://wa.me/${wa}?text=${msg}`, "_blank");
+  state.cart = {};
+  save("cart");
+  closeCheckout();
+  renderProducts();
+  updateSummary();
+  toast("✓ Pedido confirmado y enviado");
+}
+
+// Para usuarios avanzados: copiar el último código de pedido al portapapeles
+function copyLastOrderCode() {
+  if (!window._lastOrderCode) return toast("No hay código disponible");
+  navigator.clipboard.writeText(window._lastOrderCode).then(() => toast("Código copiado"));
+}
+
+// ======= ADMIN =======
+function openAdmin() {
+  document.getElementById("adminModal").classList.add("active");
+  if (state.isAdmin) showAdminPanel();
+}
+function closeAdmin() { document.getElementById("adminModal").classList.remove("active"); }
+function loginAdmin() {
+  if (document.getElementById("adminPass").value === state.store.pass) {
+    state.isAdmin = true;
+    showAdminPanel();
+  } else toast("Clave incorrecta");
+}
+// Tabs admin
+function switchAdminTab(tab) {
+  document.querySelectorAll(".admin-tab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".admin-tab-content").forEach(c => c.classList.remove("active"));
+  const btn = Array.from(document.querySelectorAll(".admin-tab")).find(b => b.textContent.toLowerCase().includes(tab.toLowerCase()) || b.getAttribute("onclick")?.includes(`'${tab}'`));
+  if (btn) btn.classList.add("active");
+  const content = document.querySelector(`.admin-tab-content[data-tab="${tab}"]`);
+  if (content) content.classList.add("active");
+}
+
+// ======= DASHBOARD DE PEDIDOS =======
+const ORDER_STATUSES = [
+  { id: "new",       label: "Nuevo",     color: "#f59e0b" },
+  { id: "paid",      label: "Pagado",    color: "#10b981" },
+  { id: "purchased", label: "Comprado",  color: "#06b6d4" },
+  { id: "shipped",   label: "Enviado",   color: "#a855f7" },
+  { id: "delivered", label: "Entregado", color: "#22c55e" }
+];
+function statusBadge(s) {
+  const st = ORDER_STATUSES.find(x => x.id === s) || ORDER_STATUSES[0];
+  return `<span style="background:${st.color}22; color:${st.color}; padding:2px 8px; border-radius:999px; font-size:0.7rem; font-weight:600;">${st.label}</span>`;
+}
+function fmtDate(iso) {
+  try { const d = new Date(iso); return d.toLocaleDateString("es-CL", {day:"2-digit", month:"short", year:"numeric"}) + " " + d.toLocaleTimeString("es-CL", {hour:"2-digit", minute:"2-digit"}); }
+  catch { return iso; }
+}
+
+function renderOrders() {
+  const list = document.getElementById("adminOrdersList");
+  const badge = document.getElementById("ordersBadge");
+  const stats = document.getElementById("ordersStatsRow");
+  if (!list) return;
+  const orders = state.orders || [];
+  badge.textContent = orders.length;
+  // Stats por estado
+  const counts = {};
+  ORDER_STATUSES.forEach(s => counts[s.id] = 0);
+  orders.forEach(o => { counts[o.status] = (counts[o.status]||0) + 1; });
+  stats.innerHTML = ORDER_STATUSES.map(s =>
+    `<div style="background:#0f172a; padding:6px 10px; border-radius:6px; font-size:0.75rem; border:1px solid var(--border);">
+      <span style="color:${s.color};">●</span> ${s.label}: <b>${counts[s.id] || 0}</b>
+    </div>`
+  ).join("");
+  if (!orders.length) {
+    list.innerHTML = '<div style="padding:14px; text-align:center; color:var(--text-muted);">Sin pedidos todavía</div>';
+    return;
+  }
+  // Más recientes primero
+  const sorted = orders.slice().sort((a, b) => (b.date||"").localeCompare(a.date||""));
+  list.innerHTML = sorted.map(o => `
+    <div class="admin-product-row" onclick="openOrderModal('${o.id}')" style="cursor:pointer;">
+      <div class="info">
+        <div class="nm" style="display:flex; align-items:center; gap:8px;">
+          ${o.customerName || "Cliente sin nombre"} ${statusBadge(o.status)}
+        </div>
+        <div class="pr" style="color: var(--text-muted);">
+          ${fmtDate(o.date)} · ${o.totalUnits} u · <span style="color: var(--accent);">${fmt(o.totalConIva)}</span>
+        </div>
+      </div>
+      <button class="del-btn" onclick="event.stopPropagation(); deleteOrder('${o.id}')">×</button>
+    </div>
+  `).join("");
+}
+
+function openOrderModal(orderId) {
+  const o = state.orders.find(x => x.id === orderId);
+  if (!o) return;
+  document.getElementById("orderModalTitle").textContent = `Pedido ${o.id.slice(-6)}`;
+  const body = document.getElementById("orderModalBody");
+  const itemsHtml = (o.items || []).map(it => {
+    // Buscar link del producto: primero el item, sino el state actual
+    const productInState = state.products.find(x => x.id === it.pid);
+    const link = it.link || (productInState?.link) || "";
+    const linkBtn = link
+      ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener" style="font-size: 0.7rem; color: var(--accent); text-decoration: none; padding: 2px 8px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); border-radius: 4px; white-space: nowrap;">🔗 1688</a>`
+      : "";
+    return `
+    <div style="display:flex; gap:10px; padding:8px 0; border-bottom: 1px solid var(--border); align-items: center;">
+      <img src="${proxyImg(it.colorImg, 80)}" style="width:48px; height:48px; object-fit:cover; border-radius:6px;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:600; font-size:0.9rem; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">${escapeHtml(it.colorName)} ${linkBtn}</div>
+        <div style="font-size:0.75rem; color: var(--text-muted);">${escapeHtml(it.productName)} · ${escapeHtml(it.model)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:600;">×${it.qty}</div>
+        <div style="font-size:0.75rem; color: var(--accent);">${fmt(it.qty * it.priceNeto)}</div>
+      </div>
+    </div>`;
+  }).join("");
+  // Datos de facturación (con fallback para pedidos viejos sin customer)
+  const c = o.customer || { type: "persona", name: o.customerName || "—", rut: "", address: "", email: "", phone: "", giro: "" };
+  const billingHtml = `
+    <div style="background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem;">
+      <div style="font-size:0.75rem; color: var(--accent); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">📄 Datos de facturación</div>
+      <div style="display:grid; grid-template-columns: max-content 1fr; gap: 6px 12px; align-items: start;">
+        <span style="color: var(--text-muted);">Tipo:</span><b>${c.type === "empresa" ? "🏢 Empresa" : "👤 Persona"}</b>
+        <span style="color: var(--text-muted);">${c.type === "empresa" ? "Razón Social" : "Nombre"}:</span><b>${escapeHtml(c.name || "—")}</b>
+        <span style="color: var(--text-muted);">RUT:</span><b style="user-select: all;">${escapeHtml(c.rut || "—")}</b>
+        <span style="color: var(--text-muted);">Dirección:</span><span>${escapeHtml(c.address || "—")}</span>
+        ${c.giro ? `<span style="color: var(--text-muted);">Giro:</span><span>${escapeHtml(c.giro)}</span>` : ""}
+        <span style="color: var(--text-muted);">Email:</span><span style="user-select: all;">${escapeHtml(c.email || "—")}</span>
+        <span style="color: var(--text-muted);">Teléfono:</span><span style="user-select: all;">${escapeHtml(c.phone || "—")}</span>
+      </div>
+    </div>`;
+  body.innerHTML = billingHtml + `
+    <div style="background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem;">
+      <div style="display:flex; justify-content:space-between; padding: 3px 0;">
+        <span style="color: var(--text-muted);">Fecha:</span>
+        <b>${fmtDate(o.date)}</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding: 3px 0;">
+        <span style="color: var(--text-muted);">Tier logística:</span>
+        <b>${escapeHtml(o.tier)} (${o.totalKg}kg)</b>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding: 3px 0; align-items:center;">
+        <span style="color: var(--text-muted);">Estado:</span>
+        <select onchange="changeOrderStatus('${o.id}', this.value)" style="background:#1e293b; border:1px solid var(--border); color:var(--text); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">
+          ${ORDER_STATUSES.map(s => `<option value="${s.id}" ${o.status===s.id?"selected":""}>${s.label}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <h3 style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px;">Items (${o.items.length} variantes · ${o.totalUnits} u)</h3>
+    <div>${itemsHtml}</div>
+    <div style="margin-top: 14px; padding-top: 14px; border-top: 2px solid var(--accent);">
+      <div style="display:flex; justify-content:space-between; padding: 3px 0;"><span style="color: var(--text-muted);">Subtotal neto</span><span>${fmt(o.totalNeto)}</span></div>
+      <div style="display:flex; justify-content:space-between; padding: 3px 0;"><span style="color: var(--text-muted);">IVA ${o.ivaPct}%</span><span>${fmt(o.ivaAmount)}</span></div>
+      <div style="display:flex; justify-content:space-between; padding: 6px 0; font-weight:700; font-size:1.05rem;"><span>Total</span><span style="color: var(--accent);">${fmt(o.totalConIva)}</span></div>
+    </div>
+    <div style="margin-top: 14px;">
+      <label style="font-size: 0.82rem; color: var(--text-muted); display:block; margin-bottom: 4px;">Notas internas</label>
+      <textarea onchange="updateOrderNotes('${o.id}', this.value)" style="min-height: 50px;">${escapeHtml(o.notes || "")}</textarea>
+    </div>
+  `;
+  document.getElementById("orderModal").classList.add("active");
+}
+function closeOrderModal() { document.getElementById("orderModal").classList.remove("active"); }
+
+function changeOrderStatus(id, status) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  o.status = status;
+  save("orders");
+  renderOrders();
+  toast("Estado actualizado");
+}
+function updateOrderNotes(id, notes) {
+  const o = state.orders.find(x => x.id === id);
+  if (!o) return;
+  o.notes = notes;
+  save("orders");
+}
+function deleteOrder(id) {
+  if (!confirm("¿Eliminar este pedido?")) return;
+  state.orders = state.orders.filter(o => o.id !== id);
+  save("orders");
+  renderOrders();
+}
+// Compactar pedido a código corto: customer abreviado + items como arrays [pid, model, cid, qty]
+function encodeOrderCode(order) {
+  const c = order.customer || {};
+  const compact = {
+    v: 1,
+    id: order.id,
+    d: order.date,
+    s: order.status || "new",
+    c: [c.type === "empresa" ? "e" : "p", c.name, c.rut, c.address, c.email, c.phone, c.giro || ""],
+    i: (order.items || []).map(it => [it.pid, it.model, it.cid, it.qty])
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
+}
+
+// Reconstruir pedido completo desde código (usa products del catálogo para llenar info)
+function decodeOrderCode(code) {
+  let parsed;
+  try {
+    parsed = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+  } catch(e) {
+    return null;
+  }
+  // Detectar si es nuevo formato (compact) o viejo formato (full JSON)
+  if (parsed.v === 1 && Array.isArray(parsed.c) && Array.isArray(parsed.i)) {
+    // Nuevo compacto
+    const [type, name, rut, address, email, phone, giro] = parsed.c;
+    const customer = {
+      type: type === "e" ? "empresa" : "persona",
+      name: name || "", rut: rut || "", address: address || "",
+      email: email || "", phone: phone || "", giro: giro || ""
+    };
+    const items = parsed.i.map(([pid, model, cid, qty]) => {
+      const p = state.products.find(x => x.id === pid);
+      const col = p?.colors.find(c => c.id === cid);
+      return {
+        pid, productName: p?.name || "Producto desconocido",
+        model, cid, colorName: col?.name || "—", colorImg: col?.img || "",
+        qty, priceNeto: p ? calcPrice(p) : 0,
+        weightG: p?.weight || 50,
+        material: p?.material || "",
+        link: p?.link || ""
+      };
+    });
+    let totalNeto = 0, totalUnits = 0, totalKg = 0;
+    items.forEach(it => {
+      totalNeto += it.qty * it.priceNeto;
+      totalUnits += it.qty;
+      totalKg += it.qty * it.weightG / 1000;
+    });
+    const ivaPct = state.formula.iva || 19;
+    const ivaAmount = Math.round(totalNeto * ivaPct / 100);
+    return {
+      id: parsed.id, date: parsed.d, customer,
+      customerName: customer.name,
+      items, totalNeto, ivaPct, ivaAmount,
+      totalConIva: totalNeto + ivaAmount,
+      totalUnits, totalKg: Math.round(totalKg*100)/100,
+      tier: "—", status: parsed.s || "new", notes: ""
+    };
+  }
+  // Formato viejo (full JSON)
+  if (parsed.id && parsed.items) return parsed;
+  return null;
+}
+
+function importOrderCode() {
+  const code = document.getElementById("importOrderCode").value.trim();
+  if (!code) return toast("Pegá un código primero");
+  const order = decodeOrderCode(code);
+  if (!order) return toast("Código inválido — pegá el texto completo entre comillas");
+  if (state.orders.find(o => o.id === order.id)) {
+    if (!confirm("Este pedido ya existe. ¿Sobreescribir?")) return;
+    state.orders = state.orders.filter(o => o.id !== order.id);
+  }
+  state.orders.push(order);
+  save("orders");
+  renderOrders();
+  document.getElementById("importOrderCode").value = "";
+  toast("✓ Pedido importado");
+}
+
+// Vista consolidada de compra a 1688
+function openBuyList() {
+  const orders = (state.orders || []).filter(o => o.status === "new" || o.status === "paid");
+  if (!orders.length) {
+    document.getElementById("buyListBody").innerHTML = '<div style="padding:30px; text-align:center; color:var(--text-muted);">Sin pedidos pendientes de comprar (estados Nuevo o Pagado)</div>';
+    document.getElementById("buyListModal").classList.add("active");
+    return;
+  }
+  // Consolidar items por (pid, model, cid)
+  const consolidated = {};
+  orders.forEach(o => {
+    o.items.forEach(it => {
+      const key = `${it.pid}::${it.model}::${it.cid}`;
+      if (!consolidated[key]) {
+        consolidated[key] = { ...it, qty: 0, fromOrders: [] };
+      }
+      consolidated[key].qty += it.qty;
+      consolidated[key].fromOrders.push({ orderId: o.id, customer: o.customerName, qty: it.qty });
+    });
+  });
+  // Agrupar por producto para mejor visualización
+  const byProduct = {};
+  Object.values(consolidated).forEach(it => {
+    if (!byProduct[it.pid]) byProduct[it.pid] = { name: it.productName, items: [] };
+    byProduct[it.pid].items.push(it);
+  });
+  let html = `<div style="margin-bottom:14px; padding: 10px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; font-size: 0.85rem;">
+    Sumando <b>${orders.length}</b> pedidos pendientes (Nuevo + Pagado). Esto es lo que tenés que pedir a 1688.
+  </div>`;
+  let totalUnits = 0, totalKg = 0;
+  for (const pid in byProduct) {
+    const p = byProduct[pid];
+    let prodTotal = 0, prodKg = 0;
+    const itemsHtml = p.items.map(it => {
+      prodTotal += it.qty;
+      const kg = it.qty * (it.weightG||50) / 1000;
+      prodKg += kg;
+      return `<div style="display:flex; gap:10px; padding:6px 0; border-bottom: 1px solid var(--border); align-items: center;">
+        <img src="${proxyImg(it.colorImg, 60)}" style="width:36px; height:36px; object-fit:cover; border-radius:4px;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:0.85rem; font-weight:500;">${escapeHtml(it.colorName)}</div>
+          <div style="font-size:0.7rem; color: var(--text-muted);">${escapeHtml(it.model)} · ${kg.toFixed(2)}kg</div>
+        </div>
+        <div style="text-align:right; font-weight:700; color: var(--accent);">×${it.qty}</div>
+      </div>`;
+    }).join("");
+    totalUnits += prodTotal;
+    totalKg += prodKg;
+    // Link 1688: tomar del producto actual o del primer item
+    const productInState = state.products.find(x => x.id === pid);
+    const link = (productInState?.link) || p.items[0]?.link || "";
+    const linkBtn = link
+      ? `<a href="${escapeAttr(link)}" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:4px; background: rgba(245,158,11,0.18); border: 1px solid rgba(245,158,11,0.45); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; text-decoration: none;">🔗 Comprar en 1688 →</a>`
+      : `<span style="font-size: 0.7rem; color: var(--danger);">⚠ Sin link guardado</span>`;
+    html += `<div style="background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+        <div style="font-weight:700; font-size: 0.95rem;">${escapeHtml(p.name)}</div>
+        ${linkBtn}
+      </div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px;">Total: ${prodTotal} u · ${prodKg.toFixed(2)}kg</div>
+      ${itemsHtml}
+    </div>`;
+  }
+  html += `<div style="margin-top: 14px; padding: 12px; background: rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:8px;">
+    <div style="display:flex; justify-content:space-between; font-size:0.95rem; font-weight:700;">
+      <span>📦 Total a pedir a 1688</span>
+      <span style="color: #10b981;">${totalUnits} u · ${totalKg.toFixed(2)}kg</span>
+    </div>
+  </div>
+  <button onclick="copyBuyList()" style="margin-top:10px; width:100%;">📋 Copiar lista para usarlo de checklist</button>`;
+  document.getElementById("buyListBody").innerHTML = html;
+  document.getElementById("buyListModal").classList.add("active");
+}
+function closeBuyList() { document.getElementById("buyListModal").classList.remove("active"); }
+function copyBuyList() {
+  const orders = (state.orders || []).filter(o => o.status === "new" || o.status === "paid");
+  const consolidated = {};
+  orders.forEach(o => o.items.forEach(it => {
+    const k = `${it.pid}::${it.model}::${it.cid}`;
+    if (!consolidated[k]) consolidated[k] = { ...it, qty: 0 };
+    consolidated[k].qty += it.qty;
+  }));
+  let txt = `LISTA DE COMPRA 1688 — ${new Date().toLocaleDateString("es-CL")}\n${"=".repeat(50)}\n\n`;
+  const byProd = {};
+  Object.values(consolidated).forEach(it => {
+    if (!byProd[it.pid]) byProd[it.pid] = { name: it.productName, items: [] };
+    byProd[it.pid].items.push(it);
+  });
+  for (const pid in byProd) {
+    const productInState = state.products.find(x => x.id === pid);
+    const link = (productInState?.link) || byProd[pid].items[0]?.link || "";
+    txt += `📦 ${byProd[pid].name}\n`;
+    if (link) txt += `   🔗 ${link}\n`;
+    byProd[pid].items.forEach(it => {
+      txt += `   • ${it.model} · ${it.colorName} → ${it.qty} u\n`;
+    });
+    txt += "\n";
+  }
+  navigator.clipboard.writeText(txt).then(() => toast("Lista copiada"));
+}
+
+function showAdminPanel() {
+  document.getElementById("adminLogin").style.display = "none";
+  document.getElementById("adminPanel").style.display = "block";
+  document.getElementById("cf-cny").value = state.formula.cny;
+  document.getElementById("cf-margin").value = state.formula.margin;
+  document.getElementById("cf-round").value = state.formula.round;
+  document.getElementById("cf-moqtot").value = state.formula.moqTotalUnits || 50;
+  document.getElementById("cf-iva").value = state.formula.iva ?? 19;
+  document.getElementById("cf-handling").value = state.formula.handlingPerUnit ?? 450;
+  // Vercel config
+  const vc = state.vercel || {};
+  if (document.getElementById("vc-token")) document.getElementById("vc-token").value = vc.token || "";
+  if (document.getElementById("vc-projid")) document.getElementById("vc-projid").value = vc.projectId || "";
+  if (document.getElementById("vc-projname")) document.getElementById("vc-projname").value = vc.projectName || "";
+  // GitHub config
+  const gh = state.github || {};
+  if (document.getElementById("gh-token")) document.getElementById("gh-token").value = gh.token || "";
+  if (document.getElementById("gh-owner")) document.getElementById("gh-owner").value = gh.owner || "";
+  if (document.getElementById("gh-repo")) document.getElementById("gh-repo").value = gh.repo || "";
+  if (document.getElementById("gh-path")) document.getElementById("gh-path").value = gh.path || "index.html";
+  if (document.getElementById("gh-branch")) document.getElementById("gh-branch").value = gh.branch || "main";
+  renderTierRows();
+  renderOrders();
+  renderDeployStatus();
+  document.getElementById("st-name").value = state.store.name;
+  document.getElementById("st-tag").value = state.store.tagline;
+  document.getElementById("st-pass").value = state.store.pass;
+  document.getElementById("bn-name").value = state.bank.name;
+  document.getElementById("bn-rut").value = state.bank.rut;
+  document.getElementById("bn-bank").value = state.bank.bank;
+  document.getElementById("bn-type").value = state.bank.type;
+  document.getElementById("bn-acct").value = state.bank.acct;
+  document.getElementById("bn-email").value = state.bank.email;
+  document.getElementById("bn-wa").value = state.bank.wa;
+  renderAdminProducts();
+}
+function renderAdminProducts() {
+  const list = document.getElementById("adminProductList");
+  if (!state.products.length) {
+    list.innerHTML = '<div style="padding:12px; text-align:center; color:var(--text-muted);">Sin productos</div>';
+    return;
+  }
+  list.innerHTML = state.products.map(p => {
+    const mainImg = (p.colors?.[0] || {}).img || "";
+    const linkBtn = p.link
+      ? `<a href="${escapeAttr(p.link)}" target="_blank" rel="noopener" title="Ver en 1688" style="text-decoration:none; color: var(--accent); font-size: 0.7rem; padding: 2px 6px; border:1px solid rgba(245,158,11,0.4); border-radius: 4px; margin-right: 4px;">🔗</a>`
+      : `<button onclick="event.stopPropagation(); editProductLink('${p.id}')" title="Agregar link 1688" style="background: rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color: var(--danger); padding: 2px 6px; border-radius: 4px; cursor:pointer; font-size: 0.7rem; margin-right: 4px;">⚠</button>`;
+    return `
+      <div class="admin-product-row">
+        <img src="${proxyImg(mainImg, 80, p.id + (p.colors?.[0]?.id || ''))}" onerror="this.style.opacity=0.2">
+        <div class="info">
+          <div class="nm">${escapeHtml(p.name)}</div>
+          <div class="pr">${fmt(calcPrice(p))} · ¥${p.cost} · ${p.weight}g${p.material ? " · " + escapeHtml(p.material) : ""} · ${p.colors?.length || 0}c · ${p.models?.length || 0}m</div>
+        </div>
+        <button onclick="openColorImageEditor('${p.id}')" title="Editar imágenes de colores" style="background: rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.4); color: #818cf8; padding: 2px 6px; border-radius: 4px; cursor:pointer; font-size: 0.7rem; margin-right: 4px;">🖼</button>
+        ${linkBtn}
+        <button class="del-btn" onclick="deleteProduct('${p.id}')">×</button>
+      </div>
+    `;
+  }).join("");
+}
+function generarPromptClaude() {
+  const linksRaw = document.getElementById("importLinks").value.trim();
+  if (!linksRaw) return toast("Pegá al menos un link 1688");
+  const links = linksRaw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  const prompt = `Por favor extraé los datos de estas publicaciones de 1688 navegándolas con Chrome y devolvé un JSON array listo para importar al catálogo.
+
+Los links pueden venir en cualquiera de estos formatos (todos válidos):
+- https://detail.1688.com/offer/XXXXXXXXX.html
+- https://qr.1688.com/s/XXXXXXX (QR shortlinks de WhatsApp/share)
+- https://m.1688.com/offer/XXXXXXXXX.html (versión móvil)
+Chrome sigue las redirecciones automáticamente.
+
+LINKS:
+${links.join("\n")}
+
+FORMATO JSON (array de productos):
+[
+  {
+    "name": "Nombre breve en español",
+    "brand": "Apple",
+    "material": "PP / TPU / Resina / Aleación metal / Cuero PU / etc",
+    "link": "https://detail.1688.com/offer/XXXXXXXXX.html",
+    "cost": <costo CNY (¥) por unidad>,
+    "weight": <peso en gramos por unidad>,
+    "models": ["iPhone 17", "iPhone 17 Pro", "iPhone 17 Pro Max"],
+    "colors": [
+      {"name": "Nombre del color en español", "img": "https://cbu01.alicdn.com/img/ibank/..."},
+      ...
+    ]
+  },
+  ...
+]
+
+REGLAS:
+- name: nombre comercial breve y descriptivo (sin texto chino)
+- brand: detectar por modelo (Apple para iPhone, Samsung para Galaxy, etc.)
+- material: lo que aparezca como "Material" en specs (PP, TPU, Silicona, Resina, Aleación, Cuero, Vidrio templado, etc.)
+- cost: precio CNY base (¥)
+- weight: peso unitario en gramos (extraer de tabla de specs)
+- models: todos los iPhones compatibles que aparecen en "Applicable models"
+- colors: extraer cada color SKU usando el selector ".sku-filter-button" (los <img> dentro tienen las URLs correctas, sufijo _sum.jpg que se debe REMOVER para tener foto limpia en alta resolución)
+  ⚠️ CRÍTICO: NO uses las URLs del carousel/galería principal — esas son marketing collages con texto chino. Usa SOLO los thumbs del SKU panel (.sku-filter-button img).
+- Devolvé SOLO el JSON, sin explicaciones ni texto extra
+- IMPORTANTE: incluir el link 1688 original en cada producto (campo "link") — esencial para recompras rápidas`;
+
+  navigator.clipboard.writeText(prompt).then(
+    () => toast(`Prompt copiado (${links.length} link${links.length>1?"s":""}). Pegalo en Claude.`),
+    () => toast("No se pudo copiar — copia manual el prompt")
+  );
+}
+
+function importProducts() {
+  try {
+    const data = JSON.parse(document.getElementById("importJson").value);
+    const arr = Array.isArray(data) ? data : [data];
+    arr.forEach(d => {
+      // Normalizar
+      const colors = (d.colors || []).map((c, i) => ({
+        id: c.id || ("c" + (i+1)),
+        name: c.name || "Color " + (i+1),
+        img: c.img || ""
+      }));
+      state.products.push({
+        id: "p" + Date.now() + Math.random().toString(36).slice(2,5),
+        name: d.name || "Producto sin nombre",
+        brand: d.brand || null,
+        material: d.material || "",
+        link: d.link || "",
+        cost: d.cost || 0,
+        weight: d.weight || 0,
+        price: d.price || null,
+        models: d.models || [],
+        colors
+      });
+    });
+    save("products");
+    bumpChange();
+    renderTabs();
+    renderProducts();
+    renderAdminProducts();
+    document.getElementById("importJson").value = "";
+    toast(`${arr.length} producto(s) importado(s)`);
+  } catch (e) { toast("JSON inválido"); }
+}
+function editProductLink(id) {
+  const p = state.products.find(x => x.id === id);
+  if (!p) return;
+  const newLink = prompt("Pegá el link 1688 de esta publicación:", p.link || "");
+  if (newLink === null) return;
+  p.link = newLink.trim();
+  save("products");
+  renderAdminProducts();
+  toast("Link guardado");
+}
+
+// Editor de imágenes por variante de color
+function openColorImageEditor(productId) {
+  const p = state.products.find(x => x.id === productId);
+  if (!p) return;
+  const html = `
+    <div style="margin-bottom:14px; padding: 10px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; font-size: 0.82rem;">
+      💡 <b>Tip:</b> Las fotos de 1688 a veces tienen texto chino encima. Reemplazá con URL de una foto limpia (de Aliexpress, fotos propias, etc.). Click en cualquier color para cambiar su imagen.
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+      ${p.colors.map((c, i) => `
+        <div style="display: flex; gap: 10px; padding: 8px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; align-items: center;">
+          <img src="${proxyImg(c.img, 100, p.id + c.id)}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; flex-shrink: 0;" referrerpolicy="no-referrer">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 600; font-size: 0.85rem; margin-bottom: 4px;">${escapeHtml(c.name)}</div>
+            <input type="text" id="colimg-${i}" value="${escapeAttr(c.img)}" style="width: 100%; padding: 5px 8px; background: var(--card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-size: 0.72rem; font-family: monospace;">
+          </div>
+          <button onclick="saveColorImage('${p.id}', '${c.id}', document.getElementById('colimg-${i}').value)" style="background: var(--accent); color: #0f172a; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; flex-shrink: 0;">✓</button>
+        </div>
+      `).join("")}
+    </div>
+  `;
+  document.getElementById("orderModalTitle").textContent = `Imágenes — ${p.name}`;
+  document.getElementById("orderModalBody").innerHTML = html;
+  document.getElementById("orderModal").classList.add("active");
+}
+
+function saveColorImage(productId, colorId, newUrl) {
+  const p = state.products.find(x => x.id === productId);
+  if (!p) return;
+  const c = p.colors.find(c => c.id === colorId);
+  if (!c) return;
+  c.img = newUrl.trim();
+  save("products");
+  renderProducts();
+  renderAdminProducts();
+  // Refrescar el modal
+  openColorImageEditor(productId);
+  toast("Imagen actualizada");
+}
+
+function deleteProduct(id) {
+  if (!confirm("¿Eliminar producto?")) return;
+  state.products = state.products.filter(p => p.id !== id);
+  for (const k in state.cart) if (k.startsWith(id + "::")) delete state.cart[k];
+  save("products");
+  save("cart");
+  bumpChange();
+  renderTabs();
+  renderProducts();
+  renderAdminProducts();
+  updateSummary();
+}
+function saveFormula() {
+  state.formula = {
+    ...state.formula, // preservar logisticTiers
+    cny: parseFloat(document.getElementById("cf-cny").value) || 130,
+    margin: parseFloat(document.getElementById("cf-margin").value) || 50,
+    round: parseFloat(document.getElementById("cf-round").value) || 50,
+    moqTotalUnits: parseFloat(document.getElementById("cf-moqtot").value) || 50,
+    iva: parseFloat(document.getElementById("cf-iva").value) || 0,
+    handlingPerUnit: parseFloat(document.getElementById("cf-handling").value) || 0
+  };
+  save("formula");
+  bumpChange();
+  renderProducts();
+  renderAdminProducts();
+  updateSummary();
+  toast("Fórmula guardada");
+}
+
+function renderTierRows() {
+  const tbody = document.getElementById("tierRows");
+  if (!tbody) return;
+  const tiers = state.formula.logisticTiers || [];
+  tbody.innerHTML = tiers.map((t, i) => `
+    <tr>
+      <td style="padding:4px;"><input type="number" step="0.5" value="${t.minKg || 0}" id="tier-kg-${i}" style="width:100%; padding:6px; background:#0f172a; border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.85rem;"></td>
+      <td style="padding:4px;"><input type="number" step="50" value="${t.costPerUnit}" id="tier-cost-${i}" style="width:100%; padding:6px; background:#0f172a; border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.85rem;"></td>
+      <td style="padding:4px;"><input type="text" value="${escapeAttr(t.label)}" id="tier-label-${i}" style="width:100%; padding:6px; background:#0f172a; border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:0.85rem;"></td>
+    </tr>
+  `).join("");
+}
+
+function saveTiers() {
+  const tiers = (state.formula.logisticTiers || []).map((_, i) => ({
+    minKg: parseFloat(document.getElementById("tier-kg-" + i).value) || 0,
+    costPerUnit: parseFloat(document.getElementById("tier-cost-" + i).value) || 1000,
+    label: document.getElementById("tier-label-" + i).value.trim() || "Nivel " + (i+1)
+  }));
+  state.formula.logisticTiers = tiers;
+  save("formula");
+  bumpChange();
+  renderProducts();
+  renderAdminProducts();
+  updateSummary();
+  toast("Niveles guardados");
+}
+function recalcAll() { renderProducts(); renderAdminProducts(); updateSummary(); toast("Recalculado"); }
+function saveStore() {
+  state.store = {
+    name: document.getElementById("st-name").value.trim() || "Mi Tienda",
+    tagline: document.getElementById("st-tag").value.trim(),
+    pass: document.getElementById("st-pass").value.trim() || "579318642"
+  };
+  save("store");
+  bumpChange();
+  document.title = state.store.name + " · Catálogo Mayorista";
+  toast("Tienda guardada");
+}
+function saveBank() {
+  state.bank = {
+    name: document.getElementById("bn-name").value.trim(),
+    rut: document.getElementById("bn-rut").value.trim(),
+    bank: document.getElementById("bn-bank").value.trim(),
+    type: document.getElementById("bn-type").value.trim(),
+    acct: document.getElementById("bn-acct").value.trim(),
+    email: document.getElementById("bn-email").value.trim(),
+    wa: document.getElementById("bn-wa").value.trim()
+  };
+  save("bank");
+  bumpChange();
+  toast("Datos guardados");
+}
+// Genera el HTML blindado (reusable: para download O para deploy directo)
+async function generateBlindedHTML() {
+  // 1) Verificar imágenes en cache
+  if (!window.IMG_CACHE) window.IMG_CACHE = {};
+  const allCacheJobs = [];
+  for (const p of state.products) {
+    for (const c of (p.colors || [])) {
+      const cacheId = p.id + c.id;
+      const cached = window.IMG_CACHE[cacheId];
+      const isValid = cached && typeof cached === "string" && cached.length > 200 && cached.startsWith("data:image/");
+      if (!isValid) allCacheJobs.push({ cacheId, url: c.img });
+    }
+  }
+
+  // 2) Descargar las que faltan via proxy weserv → base64
+  if (allCacheJobs.length > 0) {
+    toast(`Descargando ${allCacheJobs.length} imágenes…`);
+    for (const { cacheId, url } of allCacheJobs) {
+      try {
+        const proxiedUrl = "https://images.weserv.nl/?url=" + encodeURIComponent((url || "").replace(/^https?:\/\//, ""));
+        const res = await fetch(proxiedUrl);
+        if (!res.ok) continue;
+        const blob = await res.blob();
+        const dataUrl = await new Promise((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(fr.result);
+          fr.onerror = reject;
+          fr.readAsDataURL(blob);
+        });
+        if (dataUrl && dataUrl.length > 200) window.IMG_CACHE[cacheId] = dataUrl;
+      } catch (e) { console.warn("No pude bajar imagen para", cacheId, e); }
+    }
+  }
+
+  // 3) Construir versión SANITIZADA de productos:
+  //    - img URL externa → cacheId interno (sin alicdn)
+  //    - link 1688 → eliminado completamente
+  const sanitizedProducts = state.products.map(p => ({
+    id: p.id,
+    name: p.name,
+    brand: p.brand,
+    material: p.material || "",
+    cost: 0,            // Costo CNY removido del HTML público (precio del proveedor)
+    weight: p.weight || 50,
+    price: p.price || null,
+    models: p.models || [],
+    colors: (p.colors || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      img: p.id + c.id  // Reemplazar URL alicdn por cacheId interno
+    }))
+    // link removido — no aparece en HTML público
+  }));
+
+  // 4) Construir HTML con replacements
+  let html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  const replacements = [
+    [/const DEFAULT_PRODUCTS = \[[\s\S]*?\n\];/, "const DEFAULT_PRODUCTS = " + JSON.stringify(sanitizedProducts, null, 2) + ";"],
+    [/const DEFAULT_FORMULA = \{[\s\S]*?\n\};/, "const DEFAULT_FORMULA = " + JSON.stringify(state.formula, null, 2) + ";"],
+    [/const DEFAULT_STORE = \{[^}]*\};/, "const DEFAULT_STORE = " + JSON.stringify(state.store, null, 2) + ";"],
+    [/const DEFAULT_BANK = \{[^}]*\};/, "const DEFAULT_BANK = " + JSON.stringify(state.bank, null, 2) + ";"]
+  ];
+  for (const [pattern, replacement] of replacements) {
+    if (!pattern.test(html)) {
+      toast("⚠ No pude encontrar " + pattern.source.slice(0, 30) + "...");
+      return;
+    }
+    html = html.replace(pattern, replacement);
+  }
+
+  // 5) Inyectar IMG_CACHE inline (reemplazar <script src="images-cache.js"> por contenido inline)
+  const imgCacheJson = JSON.stringify(window.IMG_CACHE);
+  html = html.replace(
+    /<script src="images-cache\.js"[^>]*><\/script>/,
+    `<script>window.IMG_CACHE = ${imgCacheJson};<\/script>`
+  );
+
+  // 6) Sanitizar referencias textuales a "1688" y "alicdn"
+  html = html
+    .replace(/Importar productos desde 1688/g, "Importar productos")
+    .replace(/Pegá uno o varios links 1688/g, "Pegá uno o varios links")
+    .replace(/links de 1688/g, "links")
+    .replace(/desde 1688/g, "")
+    .replace(/links 1688/g, "links")
+    .replace(/proveedor 1688/g, "proveedor")
+    .replace(/de 1688/g, "")
+    .replace(/extracción a Claude/g, "extracción")
+    .replace(/Tabla DHL real Essential SpA[\s\S]*?CLP\)/g, "Tabla logística estándar")
+    .replace(/cbu01\.alicdn\.com/g, "cdn-internal")
+    .replace(/detail\.1688\.com/g, "publicacion-interna")
+    .replace(/1688\.com/g, "interno");
+
+  // 7) Strip migration block
+  html = html.replace(/\/\/ Migración: actualizar imágenes con URLs incorrectas[\s\S]*?console\.log\("Migración: URLs de imágenes actualizadas a SKU thumbs reales"\);[\s\S]*?\}\n\}/g, "// (migración omitida en build público)");
+
+  return html;
+}
+
+// Wrapper para download (mantiene el botón anterior funcionando)
+async function exportHTMLForDeploy() {
+  toast("Preparando export sanitizado…");
+  const html = await generateBlindedHTML();
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "index.html";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 1000);
+  const sizeMB = (html.length / 1024 / 1024).toFixed(2);
+  toast(`✓ index.html descargado (${sizeMB} MB)`);
+}
+
+// AUTO-DEPLOY a Vercel — un solo click
+async function publishToVercel() {
+  const cfg = state.vercel || {};
+  if (!cfg.token || (!cfg.projectId && !cfg.projectName)) {
+    return toast("Configurá token + project ID/nombre primero");
+  }
+  toast("Generando HTML blindado…");
+  const html = await generateBlindedHTML();
+  const sizeMB = (html.length / 1024 / 1024).toFixed(2);
+  toast(`Subiendo a Vercel (${sizeMB} MB)…`);
+  try {
+    const body = {
+      name: cfg.projectName || "aura-catalogo",
+      target: "production",
+      files: [{ file: "index.html", data: html, encoding: "utf-8" }]
+    };
+    if (cfg.projectId) body.project = cfg.projectId;
+    const res = await fetch("https://api.vercel.com/v13/deployments", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + cfg.token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data).slice(0, 200));
+    const url = data.url ? "https://" + data.url : "";
+    toast(`✓ Publicado a Vercel: ${url || 'OK'}`);
+    console.log("Vercel deploy:", data);
+    // Registrar deploy exitoso
+    state.meta.lastDeployAt = new Date().toISOString();
+    state.meta.lastDeployUrl = url;
+    state.meta.lastDeployStatus = "ok";
+  } catch (e) {
+    toast("Error Vercel: " + e.message.slice(0, 100));
+    state.meta.lastDeployStatus = "error: " + e.message.slice(0, 60);
+    console.error(e);
+  }
+  save("meta");
+  // Sincronizar también con GitHub si está configurado
+  const ghCfg = state.github || {};
+  if (ghCfg.token && ghCfg.owner && ghCfg.repo) {
+    toast("Sincronizando GitHub…");
+    try {
+      const result = await pushToGithub(html);
+      const commit = result.commit?.sha?.slice(0, 7) || "";
+      toast(`✓ GitHub sincronizado · commit ${commit}`);
+      state.meta.lastGithubCommit = commit;
+      save("meta");
+    } catch (e) {
+      toast(`⚠ GitHub falló: ${e.message.slice(0, 80)}`);
+      console.error(e);
+    }
+  }
+  renderDeployStatus();
+  updateHeaderStatusDot();
+}
+
+// Marcar que hubo un cambio relevante (productos, formula, store, bank)
+function bumpChange() {
+  state.meta.lastChangeAt = new Date().toISOString();
+  save("meta");
+  renderDeployStatus();
+  updateHeaderStatusDot();
+}
+
+// Formato "hace X tiempo"
+function fmtAgo(iso) {
+  if (!iso) return "nunca";
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.round(diff / 1000);
+  if (sec < 60) return "hace " + sec + " s";
+  const min = Math.round(sec / 60);
+  if (min < 60) return "hace " + min + " min";
+  const h = Math.round(min / 60);
+  if (h < 24) return "hace " + h + " h";
+  const d = Math.round(h / 24);
+  return "hace " + d + " " + (d === 1 ? "día" : "días");
+}
+
+// Determina si el state local tiene cambios sin publicar
+function hasPendingChanges() {
+  const m = state.meta || {};
+  if (!m.lastDeployAt) return state.products.length > 0; // nunca se deployó pero hay data
+  if (!m.lastChangeAt) return false;
+  return new Date(m.lastChangeAt) > new Date(m.lastDeployAt);
+}
+
+// Renderiza el panel de estado en Deploy tab
+function renderDeployStatus() {
+  const el = document.getElementById("deployStatusCard");
+  if (!el) return;
+  const m = state.meta || {};
+  const dirty = hasPendingChanges();
+  const dotColor = dirty ? "#f59e0b" : (m.lastDeployAt ? "#10b981" : "#94a3b8");
+  const statusText = dirty
+    ? "⚠ Cambios sin publicar"
+    : (m.lastDeployAt ? "✓ Sincronizado" : "Sin publicaciones aún");
+  let html = `
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom: 10px;">
+      <div style="width:10px; height:10px; border-radius:50%; background:${dotColor};"></div>
+      <b style="font-size: 0.95rem;">${statusText}</b>
+    </div>
+    <div style="display:grid; grid-template-columns: max-content 1fr; gap:6px 12px; font-size:0.82rem;">
+      <span style="color: var(--text-muted);">Productos en admin:</span><b>${state.products.length}</b>
+      <span style="color: var(--text-muted);">Último cambio local:</span><b>${fmtAgo(m.lastChangeAt)}</b>
+      <span style="color: var(--text-muted);">Última publicación:</span><b>${fmtAgo(m.lastDeployAt)}</b>`;
+  if (m.lastDeployUrl) html += `
+      <span style="color: var(--text-muted);">URL deploy:</span><a href="${escapeAttr(m.lastDeployUrl)}" target="_blank" style="color: var(--accent); text-decoration: none;">${escapeHtml(m.lastDeployUrl.replace(/^https?:\/\//, ""))}</a>`;
+  if (m.lastGithubCommit) html += `
+      <span style="color: var(--text-muted);">Último commit:</span><code style="font-size:0.78rem; background:#0f172a; padding:2px 6px; border-radius:3px;">${escapeHtml(m.lastGithubCommit)}</code>`;
+  if (m.lastDeployStatus && m.lastDeployStatus !== "ok") html += `
+      <span style="color: var(--text-muted);">Estado:</span><span style="color: var(--danger);">${escapeHtml(m.lastDeployStatus)}</span>`;
+  html += `</div>`;
+  if (dirty && m.lastDeployAt) {
+    html += `<div style="margin-top: 10px; padding: 8px 12px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 6px; font-size: 0.78rem; color: var(--accent);">
+      💡 Hiciste cambios después del último deploy. Click "🚀 Publicar a Vercel ahora" abajo para actualizar el sitio público.
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// Dot pequeño en el botón Admin del header (verde/amarillo/gris)
+function updateHeaderStatusDot() {
+  const btn = document.querySelector(".header-admin-btn");
+  if (!btn) return;
+  const m = state.meta || {};
+  const dirty = hasPendingChanges();
+  const color = dirty ? "#f59e0b" : (m.lastDeployAt ? "#10b981" : "#94a3b8");
+  // Inyectar/actualizar el dot
+  let dot = btn.querySelector(".admin-status-dot");
+  if (!dot) {
+    dot = document.createElement("span");
+    dot.className = "admin-status-dot";
+    dot.style.cssText = "display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle;";
+    btn.insertBefore(dot, btn.firstChild);
+  }
+  dot.style.background = color;
+  dot.title = dirty ? "Cambios sin publicar" : (m.lastDeployAt ? "Sincronizado" : "Sin publicaciones");
+}
+
+function saveVercelConfig() {
+  state.vercel = {
+    token: document.getElementById("vc-token").value.trim(),
+    projectId: document.getElementById("vc-projid").value.trim(),
+    projectName: document.getElementById("vc-projname").value.trim()
+  };
+  save("vercel");
+  toast("Config Vercel guardada");
+}
+
+function saveGithubConfig() {
+  state.github = {
+    token: document.getElementById("gh-token").value.trim(),
+    owner: document.getElementById("gh-owner").value.trim(),
+    repo: document.getElementById("gh-repo").value.trim(),
+    path: document.getElementById("gh-path").value.trim() || "index.html",
+    branch: document.getElementById("gh-branch").value.trim() || "main"
+  };
+  save("github");
+  toast("Config GitHub guardada");
+}
+
+// Push HTML to GitHub via API (mantiene repo sincronizado con Vercel)
+async function pushToGithub(html) {
+  const cfg = state.github;
+  if (!cfg.token || !cfg.owner || !cfg.repo) throw new Error("GitHub no configurado");
+  const path = cfg.path || "index.html";
+  const branch = cfg.branch || "main";
+  const apiBase = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
+  const headers = {
+    "Authorization": "Bearer " + cfg.token,
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+  // 1) Obtener SHA actual del archivo (si existe)
+  let currentSha = null;
+  try {
+    const getRes = await fetch(`${apiBase}?ref=${encodeURIComponent(branch)}`, { headers });
+    if (getRes.ok) {
+      const data = await getRes.json();
+      currentSha = data.sha;
+    }
+  } catch (e) { /* archivo no existe — se creará */ }
+  // 2) Convertir HTML (UTF-8) a base64
+  const utf8 = new TextEncoder().encode(html);
+  let binary = "";
+  for (let i = 0; i < utf8.length; i++) binary += String.fromCharCode(utf8[i]);
+  const content = btoa(binary);
+  // 3) PUT para crear/actualizar
+  const putBody = {
+    message: `Aura update ${new Date().toISOString().slice(0, 16)}`,
+    content,
+    branch
+  };
+  if (currentSha) putBody.sha = currentSha;
+  const putRes = await fetch(apiBase, {
+    method: "PUT",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify(putBody)
+  });
+  if (!putRes.ok) {
+    const err = await putRes.text();
+    throw new Error(err.slice(0, 200));
+  }
+  return await putRes.json();
+}
+
+// EXCEL DE PRODUCTOS (CSV — Excel lo abre nativamente)
+// Una fila por (publicación × modelo iPhone). Los colores quedan listados en una celda.
+function exportProductsExcel() {
+  const f = state.formula;
+  const tier = (f.logisticTiers || [])[0] || { costPerUnit: 1000 };
+  const headers = ["ID Producto", "Publicación", "Marca", "Material", "Modelo iPhone", "Colores disponibles", "# Colores", "Costo CNY", "Peso g", "Link 1688", "Precio neto", "Precio con IVA"];
+  const rows = [];
+  state.products.forEach(p => {
+    const cost = (p.cost || 0) * (f.cny || 130);
+    const landed = cost + (tier.costPerUnit || 1000) + (f.handlingPerUnit || 0);
+    const m = Math.min(99, Math.max(0, (f.margin || 50))) / 100;
+    const sale = landed / (1 - m);
+    const round = f.round || 50;
+    const neto = Math.ceil(sale / round) * round;
+    const iva = Math.round(neto * (1 + (f.iva || 19) / 100));
+    const colorsList = (p.colors || []).map(c => c.name).join(" | ");
+    const numColors = (p.colors || []).length;
+    const models = (p.models || []);
+    if (models.length === 0) {
+      rows.push([p.id, p.name, p.brand || "Apple", p.material || "", "—", colorsList, numColors, p.cost || 0, p.weight || 0, p.link || "", neto, iva]);
+    } else {
+      models.forEach(model => {
+        rows.push([p.id, p.name, p.brand || "Apple", p.material || "", model, colorsList, numColors, p.cost || 0, p.weight || 0, p.link || "", neto, iva]);
+      });
+    }
+  });
+  const csv = [headers, ...rows].map(r =>
+    r.map(v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`).join(",")
+  ).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `aura-productos-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 1000);
+  toast(`✓ Excel descargado (${rows.length} filas, ${state.products.length} publicaciones)`);
+}
+
+function exportData() {
+  const backup = {
+    version: "v5",
+    exportedAt: new Date().toISOString(),
+    products: state.products,
+    formula: state.formula,
+    store: state.store,
+    bank: state.bank,
+    orders: state.orders
+    // vercel/github NO se incluyen por seguridad (tokens)
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `aura-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 1000);
+  toast("✓ Backup descargado");
+}
+
+function restoreBackupJson() {
+  const txt = document.getElementById("restoreJson").value.trim();
+  if (!txt) return toast("Pegá el JSON primero");
+  let data;
+  try { data = JSON.parse(txt); }
+  catch (e) { return toast("JSON inválido: " + e.message.slice(0, 80)); }
+  if (!data || typeof data !== "object") return toast("Formato inválido");
+  // Resumen de lo que se va a restaurar
+  const summary = [];
+  if (Array.isArray(data.products)) summary.push(`${data.products.length} productos`);
+  if (data.formula) summary.push("fórmula");
+  if (data.store) summary.push("config tienda");
+  if (data.bank) summary.push("datos banco");
+  if (Array.isArray(data.orders)) summary.push(`${data.orders.length} pedidos`);
+  if (!summary.length) return toast("El JSON no tiene datos válidos para restaurar");
+  if (!confirm(`¿Restaurar ${summary.join(", ")}?\n\nEsto REEMPLAZA tu state actual. Tokens Vercel/GitHub se mantienen.`)) return;
+  // Restaurar
+  if (Array.isArray(data.products)) { state.products = data.products; save("products"); }
+  if (data.formula && typeof data.formula === "object") {
+    state.formula = { ...state.formula, ...data.formula };
+    save("formula");
+  }
+  if (data.store && typeof data.store === "object") {
+    state.store = { ...state.store, ...data.store };
+    save("store");
+  }
+  if (data.bank && typeof data.bank === "object") {
+    state.bank = { ...state.bank, ...data.bank };
+    save("bank");
+  }
+  if (Array.isArray(data.orders)) { state.orders = data.orders; save("orders"); }
+  document.getElementById("restoreJson").value = "";
+  toast("✓ Backup restaurado. Recargando…");
+  setTimeout(() => location.reload(), 1500);
+}
+function resetAll() {
+  if (!confirm("¿Borrar TODOS los datos? Esto no se puede deshacer.")) return;
+  ["products","formula","store","bank","cart"].forEach(k => localStorage.removeItem("cat_" + k));
+  location.reload();
+}
+
+// ======= TOAST =======
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// ======= INIT =======
+// (storeName y storeTagline removidos del header — solo logo)
+document.title = state.store.name + " · Catálogo Mayorista";
+document.getElementById("adminFab").addEventListener("click", openAdmin);
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey && e.shiftKey && e.key === "A") openAdmin();
+});
+renderTabs();
+renderProducts();
+updateSummary();
+updateHeaderStatusDot();
+document.querySelectorAll(".modal-bg").forEach(m => {
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("active"); });
+});
+</script>
+</body>
+</html>
